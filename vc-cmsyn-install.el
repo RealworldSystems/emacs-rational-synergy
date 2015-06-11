@@ -1,13 +1,9 @@
 ;;; vc-cmsyn-install.el --- Installation of cmsyn, CM Synergy mode
  
-;; Copyright (C) 2003  Realworld Systems
+;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
+;; Copyright (C) 2003 Realworld Systems
  
-;; Author: GR <support@realworldwide.com>
-;; Created: Apr/2003
-;; Updated: Sep/2004
-;; Keywords: lisp  
- 
-;; This file is free software; you can redistribute it and/or modify
+;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
@@ -22,6 +18,19 @@
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
  
+
+;; Author: 
+;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+;;     Geert Ribbers
+;;     
+;; Maintainer:
+;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+;;
+;; Homepage: http://github.com/RealworldSystems/emacs-rational-synergy
+;;
+;; Keywords: ibm rational synergy telelogic vc version-control
+
+
 ;;; Commentary:
  
 ;; This installs vc-cmsyn in emacs.
@@ -30,6 +39,8 @@
 ;;; Code:
 
 (require 'loadhist) ;; because of calling function `feature-file'
+
+(require 'vc-rational-synergy-about) ;; The about message can be accessed by the menu
 
 (defvar vc-cmsyn-mode
   nil
@@ -55,18 +66,6 @@
   :tag "CM Synergy auto-login-logout"
   :type 'boolean
   :group 'vc-cmsyn-user)
-
-;;; (defcustom vc-cmsyn-auto-login-data nil
-;;;   "user, pwd and synergy-database to use for auto-login"
-;;;   :tag "CM Synergy auto-login-data"
-;;;   :type '(repeat
-;;; 	  (list
-;;; 	   (string :tag "CM Synergy user-name")
-;;; 	   (string :tag "CM Synergy pwd      ")
-;;; 	   (string :tag "CM Synergy database ")
-;;; 	   )
-;;; 	  )
-;;;   :group 'vc-cmsyn-user)
 
 (defcustom vc-cmsyn-auto-login-data '("" "" "")
   "user, pwd and synergy-database to use for auto-login"
@@ -118,7 +117,10 @@
 	["Undo Checkout Directory"		  vc-cmsyn-undo-co-directory		  :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
 	"---"
 	["Check In This File"			  vc-cmsyn-ci-file			  :active vc-cmsyn-mode  :keys "C-c RET i"]
+;;
+;; TODO: Should really be enabled
 ;; 	["Check In This Directory" vc-cmsyn-ci-directory	      :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
+;;
 	["Register"			          vc-cmsyn-register-file  	          :active vc-cmsyn-mode  :keys "C-c RET r"]
 	["Register Directory and Files"	          vc-cmsyn-create-directory		  :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
 	"---"
@@ -140,11 +142,10 @@
 	  )
 	["Set CCM_ADDR..."			  vc-cmsyn-set-ccmAddr			  :visible vc-cmsyn-enable-set-ccm-addr-p]
 	"---" 
-;; 	["Check for CMSynergy status on file-open" vc-cmsyn-toggle-auto-check-status-file-open :style toggle :selected vc-cmsyn-auto-check-status-file-open-p]
 	["Customize..."				  (customize-group 'vc-cmsyn-user)]
 	["Customize Admin..."			  (customize-group 'vc-cmsyn-admin)	  :visible vc-cmsyn-customize-admin-button-p]
 	["Info..."				  vc-cmsyn-info]
-	["About IBM Rational Synergy Mode"        vc-cmsyn-about])
+	["About IBM Rational Synergy Mode"        vc-rational-synergy-about])
   )
 
 (defcustom vc-cmsyn-buffer-frame-width 90
@@ -408,8 +409,6 @@ Typically this will be organized within CM Synergy already so it goes automatica
   :type 'boolean
   :group 'vc-cmsyn-admin
   )
-
-(load-file (expand-file-name "roos-loaddefs.el" (file-name-directory (locate-library "vc-cmsyn-install"))))
 
 (provide 'vc-cmsyn-install)
 

@@ -1,35 +1,9 @@
-;; vc-cmsyn-el --- CM Synergy integration.
+;;; vc-cmsyn-el --- IBM Rational Synergy integration for Emacs
  
+;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
 ;; Copyright (C) 2003 Realworld Systems
  
-;; Author:   Geert Ribbers, gribbers@realworld.nl, originally based on ccm.el by Henrik Joensson <henrik7205@hotmail.com>
-;; Version:  1.2
-;; Created: Apr/2003
-;; Updated: Feb/2005
-;; Keywords: 
- 
-;; Version history
-;; Reworked ccm for emacs 21, added functions, fixed bugs and 21-incompatibilities, changed
-;; updating mode-line to async process, given the
-;; process-output-buffer a frame of its own
- 
-;; Installation:
-;;  Add this directory to your load-path;
-;;     (setq load-path (cons <directory-path for this file> load-path))
-;;  Load the install file:
-;;    (require "vc-cmsyn-install")
-;;  Put the line `(vc-cmsyn-auto-check-status-file-open-p t)' in
-;;     the custom-set-variables section of your initialisation file
-;;      (probably .emacs).
-;;  The CMSynergy menu is found in the menu-bar under Tools by default
-;;    CMSynergy (which can be customized however by changing the custom-var
-;;    `vc-cmsyn-menu-path' with the emacs-customization system)
-;;  If you want to use the patch-facillity, also load the patch install file:
-;;    (require "vc-cmsyn-patch-install")
-;;    And put the line `(vc-cmsyn-patch-functionality-p t)'
-;;     the custom-set-variables section of your initialisation file
- 
-;; This file is free software; you can redistribute it and/or modify
+;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
@@ -42,6 +16,22 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program; if not, write to the Free Software
 ;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+;; Author: 
+;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+;;     Geert Ribbers
+;;     Henrik Joensson <henrik7205@hotmail.com>
+;;     
+;; Maintainer:
+;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+;;
+;; Homepage: http://github.com/RealworldSystems/emacs-rational-synergy
+;;
+;; Keywords: ibm rational synergy telelogic vc version-control
+
+;;; Code:
+
 
 ;; ----------
 ;; Utilities
@@ -56,7 +46,6 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Returns       : output of the command as string"
   (save-excursion
     (when (zerop (length p-command-string)) (error "vc-cmsyn-command-to-string called without argument-string"))
-;;;   (message "!! Command-args: -%s-" p-command-string)
     ;; ----------
     ;; write string to file 1st to prevend complicated quotation problems,
     ;; do not use command-shell coz sometimes processes keep hanging
@@ -111,12 +100,6 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 (defvar vc-cmsyn-modeline-string nil
 "CMSyn information, displayed in the modeline.")
 (make-variable-buffer-local 'vc-cmsyn-modeline-string)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Constants
-(defconst vc-cmsyn-int-version-string "0.1" "Version String")
-(defconst vc-cmsyn-int-date-string "2003-04" "Date String")
-(defconst vc-cmsyn-int-author-string "Geert Ribbers/Henrik Joensson" "Author String")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
@@ -1577,31 +1560,6 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
    (if (looking-at "\C-z")
        (delete-char 1))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Mode Information
-(defun vc-cmsyn-integration-version ()
-  "Display the version of CM Synergy Integration"
-  (interactive)
-  (message vc-cmsyn-int-version-string))
-
-(defun vc-cmsyn-integration-date ()
-  "Display the date of CM Synergy Integration"
-  (interactive)
-  (message vc-cmsyn-int-date-string))
-
-(defun vc-cmsyn-integration-author ()
-  "Display the author of CM Synergy Integration"
-  (interactive)
-  (message vc-cmsyn-int-author-string))
-
-;;;###autoload
-(defun vc-cmsyn-about ()
-  "Display version, date, author"
-  (interactive)
-  (message (format "CM Synergy GNU Emacs Integration v%s, %s, %s"
-		   vc-cmsyn-int-version-string
-		   vc-cmsyn-int-date-string
-		   vc-cmsyn-int-author-string)))
 
 ;;;###autoload
 (defun vc-cmsyn-start ()
