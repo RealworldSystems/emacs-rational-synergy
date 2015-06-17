@@ -1,4 +1,4 @@
-;;; vc-cmsyn-el --- IBM Rational Synergy integration for Emacs
+;;; vc-cmsyn.el --- IBM Rational Synergy integration for Emacs
  
 ;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
 ;; Copyright (C) 2003 Realworld Systems
@@ -32,165 +32,10 @@
 
 ;;; Code:
 
+(require 'vc-rational-synergy-command-to-string)
+(require 'vc-rational-synergy-utilities)
+(require 'vc-rational-synergy-modeline)
 
-;; ----------
-;; Utilities
-;; ----------
-;;;###autoload
-(defun vc-cmsyn-command-to-string (p-command-string)
-  "Call `vc-cmsyn-exe-name' with argument-string P-COMMAND-STRING.
-command-string is passed to ccm via ascii-file to avoid quoting-problems.
-  Author        : Realworld Systems (GR)
-  Date          : Oct/2004
-  Parameters    : P-COMMAND-ARGS: list of arguments to the `vc-cmsyn-exe-name' command
-  Returns       : output of the command as string"
-  (save-excursion
-    (when (zerop (length p-command-string)) (error "vc-cmsyn-command-to-string called without argument-string"))
-    ;; ----------
-    ;; write string to file 1st to prevend complicated quotation problems,
-    ;; do not use command-shell coz sometimes processes keep hanging
-    ;; ----------
-    (let* 
-	(
-	 (l-tmp-file-name (expand-file-name "tmp_syn.syn" (getenv "TEMP")))
-	 (l-buffer (get-buffer-create "*vc-cmsyn_tmp*"))
-	 )
-      (set-buffer l-buffer)
-      (erase-buffer)
-      (insert p-command-string)
-      (write-file l-tmp-file-name)
-      (kill-this-buffer)
-      (with-output-to-string
-	(with-current-buffer
-	    standard-output
-	  (call-process vc-cmsyn-exe-name nil t nil "source" (vc-cmsyn-platformity-path l-tmp-file-name))
-	  )
-	)
-;;;     (kill-buffer l-buffer)
-      )
-    )
-  )
-
-;;;###autoload
-(defun vc-cmsyn-unixify-path (p-path)
-"Converts unix-style path to windows and vice-versa (won't add drive).
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PATH: path to convert
-  Returns       : "
-(mapconcat '(lambda(x) (char-to-string (if (eq x ?\\) ?/ x))) p-path nil)
-)
-
-;;;###autoload
-(defun vc-cmsyn-platformity-path (p-path)
-  "Converts unix-style path to windows and vice-versa (won't add drive).
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PATH: path to convert
-  Returns       : "
-  (if (eq system-type 'windows-nt)
-      (mapconcat '(lambda(x) (char-to-string (if (eq x ?/) ?\\ x))) p-path nil)
-    (mapconcat '(lambda(x) (char-to-string (if (eq x ?\\) ?/ x))) p-path nil)
-    )
-  )
-
-(if (not (fboundp `redraw-modeline))
-    (defalias `redraw-modeline `force-mode-line-update))
-
-(defvar vc-cmsyn-modeline-string nil
-"CMSyn information, displayed in the modeline.")
-(make-variable-buffer-local 'vc-cmsyn-modeline-string)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Commands
-
-(defun vc-cmsyn-check-login ()
-  "Check if login is necessary and if so. do login with stored information.
-  Author        : Realworld Systems (GR)
-  Date          : Mar/2004
-  Parameters    : 
-  Returns       : non-nil if login was successfull"
-;;;   (message "!! vc-cmsyn-check-login" )
-  (let* 
-      (
-       (l-ccm_addr (getenv "CCM_ADDR"))
-;;;        (l-time (string-to-number (format-time-string "%S")))
-       l-ccm-string l-new-ccm-addr l-user l-pw l-db l-task-string
-       )
-    (when vc-cmsyn-auto-login-logout
-;;;       (message "!! REAL AUTO login")
-      (when (zerop (length vc-cmsyn-auto-login-task))
-	(customize-variable 'vc-cmsyn-auto-login-task)
-	(message-box "Auto-login Task not set, needs task to be set to work with auto-login to Synergy, aborting!")
-	(error "Auto-login Task not set, needs task to be set to work with auto-login to Synergy!")
-	)
-      (setq l-user	 (nth 0 vc-cmsyn-auto-login-data))
-      (setq l-pw	 (nth 1 vc-cmsyn-auto-login-data))
-      (setq l-db	 (nth 2 vc-cmsyn-auto-login-data))
-      (when (zerop (length l-user))
-	(customize-variable 'vc-cmsyn-auto-login-data)
-	(message-box "Auto-login Task not set, needs task to be set to work with auto-login to Synergy, aborting")
-	(error "Auto-login Task not set, needs task to be set to work with auto-login to Synergy!")
-	)
-      (message "Autologin to CM Synergy...")
-;;;       (message "Starting ccm-session with command: -%s-" (format "%s start -m -pw %s -n %s -d %s -nogui" vc-cmsyn-exe-name l-pw l-user l-db))
-;;;       (setq l-ccm-string (vc-cmsyn-command-to-string "start" "-m" "-pw" l-pw "-n" l-user "-d" l-db " -nogui"))
-      (setq l-ccm-string (vc-cmsyn-command-to-string (format "start -m -pw %s -n %s -d %s -nogui" l-pw l-user l-db)))
-;;;       (message "!! Analyzing string: -%s-" l-ccm-string)
-      (cond ;; difference in 1st session and multiple-sessions
-       ((string-match  "^Command[ \t]+Interface[ \t]+@ \\(.*\\)[ \t]*\\((current session)\\)?[ \t]*$" l-ccm-string)
-	(setq l-new-ccm-addr (match-string 1 l-ccm-string))l-db
-	)
-       ((string-match "CM Synergy address is[ \t]*\\(.*\\)$" l-ccm-string)
-	(setq l-new-ccm-addr (match-string 1 l-ccm-string))
-	)
-       )
-;;;      (if (string-match  "^Command[ \t]+Interface[ \t]+@ \\(.*\\)[ \t]*\\((current session)\\)?[ \t]*$" l-ccm-string)
-;;;	  (setq l-new-ccm-addr (match-string 1 l-ccm-string))
-;;;	(message "Dcheking for multiple-session, match: -%s-" (string-match "CM Synergy address is[ \t]*\\(.*\\)$" l-ccm-string))
-;;;	(when (string-match "CM Synergy address is[ \t]*\\(.*\\)$" l-ccm-string)
-;;;	  (setq l-new-ccm-addr (match-string 1 l-ccm-string))
-;;;	  (message "!! new-ccm-addr2: -%s-" l-new-ccm-addr)
-;;;	  )
-;;;	)
-;;;       (setq l-new-ccm-addr (progn (when (string-match  "^Command[ \t]+Interface[ \t]+@ \\(.*\\)[ \t]*\\((current session)\\)?[ \t]*$" l-ccm-string) (match-string 1 l-string))))
-      (setq l-new-ccm-addr (if (and l-new-ccm-addr (string-match "[ \t]*(current session)[ \t]*" l-new-ccm-addr)) (replace-match "" t t l-new-ccm-addr) l-new-ccm-addr))
-      (setq l-new-ccm-addr (if (and l-new-ccm-addr (string-match "\\([ \t]*\\.[ \t]*$\\)" l-new-ccm-addr)) (replace-match "" t t l-new-ccm-addr 1) l-new-ccm-addr))
-;;;       (message "Started Address: -%s-, current env: -%s-" l-new-ccm-addr (getenv "ccm_addr"))
-      (setenv "CCM_ADDR" l-new-ccm-addr) ;; set this 1 current, stop should only quit this 1!
-;;;       (message "!! env set to: -%s-, check-login took: -%s-" (getenv "CCM_ADDR") (- (string-to-number (format-time-string "%S")) l-time))
-;;;       (setq l-task-string (vc-cmsyn-command-to-string "task" "-default" vc-cmsyn-auto-login-task))
-      (setq l-task-string (vc-cmsyn-command-to-string (format "task -default %s" vc-cmsyn-auto-login-task)))
-;;;       (message "!! Task-output: -%s-" l-task-string)
-      (save-match-data (string-match "CM Synergy server starting on host" l-ccm-string)) ;; if successfully
-      (message "Autologin to CM Synergy...done")
-      )
-    )
-  )
-
-(defun vc-cmsyn-check-logout ()
-  "Check if login is necessary and if so. do login with stored information.
-  Author        : Realworld Systems (GR)
-  Date          : Mar/2004
-  Parameters    : 
-  Returns       : non-nil if logout was successfull"
-;;;   (message "!! Checking auto-logout")
-  (let* 
-      (
-       l-ccm-string l-user l-pw l-db
-       )
-    (when vc-cmsyn-auto-login-logout
-      (message "Autologout from CM Synergy...")
-;;;       (message "!! AUTO logout")
-;;;       (setq l-ccm-string (vc-cmsyn-command-to-string "stop"))
-      (setq l-ccm-string (vc-cmsyn-command-to-string "stop"))
-      (setenv "CCM_ADDR" nil t) ;; the current session is stopped, make sure we don't try to reuse this
-      (message "Autologout from CM Synergy...done")
-      (save-match-data (string-match "CM Synergy engine exiting." l-ccm-string)) ;; if successfully
-;;;       (message "!! Logged out from Synergy, with outputstring: -%s-" l-ccm-string)
-      )
-    )
-  )
 
 ;;;###autoload
 (defun vc-cmsyn-co-file ()
@@ -201,7 +46,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : checks task set before trying to check-out
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   ;; ----------
   ;; Don't proceed when modified
   ;; ----------
@@ -215,7 +60,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
        (l-message (format "Starting check out of %s..." l-filename))
        l-proc
        )
-    (vc-cmsyn-run-command l-message (format "co %s" (vc-cmsyn-platformity-path l-filename)) 'vc-cmsyn-sentinel-co-file nil t)
+    (vc-cmsyn-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-file nil t)
     ;;     (vc-cmsyn-report l-message)
 ;;;;     (vc-cmsyn-show-buffer "Starting check out...")
     ;;     (setq comint-output-filter-functions
@@ -228,7 +73,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
     ;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-co-file)
     ;; ;;     (set-process-filter l-proc 'vc-cmsyn-process-filter)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -240,7 +85,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : checks task set before trying to check-out, same as co file but dir-name is constructed
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   ;; ----------
   ;; Don't proceed when modified
   ;; ----------
@@ -254,9 +99,9 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
        (l-message (format "Starting check out of directory %s..." l-filename))
        l-proc
        )
-    (vc-cmsyn-run-command l-message (format "co %s" (vc-cmsyn-platformity-path l-filename)) 'vc-cmsyn-sentinel-co-directory nil t)
+    (vc-cmsyn-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-directory nil t)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -268,14 +113,14 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : 
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let*
       (
        (l-filename (buffer-file-name))
        (l-message (format "Starting undo check out of %s..." l-filename))
        l-proc
        )
-    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" (vc-cmsyn-platformity-path l-filename)) 'vc-cmsyn-sentinel-undo-co-file nil t)
+    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-file nil t)
 ;;    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" l-filename) 'vc-cmsyn-sentinel-ci-file)
 ;;     (vc-cmsyn-report l-message)
 ;; ;;     (vc-cmsyn-show-buffer "Undoing check out...")
@@ -287,7 +132,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 ;;     (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
 ;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-ci-file)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -299,16 +144,16 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : 
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let*
       (
        (l-filename (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
        (l-message (format "Starting undo check out of %s..." l-filename))
        l-proc
 	)
-    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" (vc-cmsyn-platformity-path l-filename)) 'vc-cmsyn-sentinel-undo-co-directory nil t)
+    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-directory nil t)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -319,15 +164,15 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Parameters    : 
   Returns       : -"
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
 ;;   (when vc-cmsyn-check-default-task-set-p (vc-cmsyn-check-task-set t))
   (let* ((l-type	      (when vc-cmsyn-query-create-file-type (read-string "Type of the file: " "")))
 	 (l-version	      (when vc-cmsyn-query-create-file-version (read-string "Version of the file: " "")))
 	 (l-filename	      (buffer-file-name))
-;;	 (l-filename	      (vc-cmsyn-platformity-path (buffer-file-name)))
+;;	 (l-filename	      (vc-rational-synergy-platformify-path (buffer-file-name)))
 ;; 	 (l-filename	      (file-name-nondirectory (buffer-file-name)))
-	 (l-create-command    (if l-type (format "create -type %s %s" l-type (vc-cmsyn-platformity-path l-filename)) (format "create %s" (vc-cmsyn-platformity-path l-filename))))
-	 (l-attr-command      (when l-version (format "attr -modify version -value %s %s" l-version (vc-cmsyn-platformity-path l-filename))))
+	 (l-create-command    (if l-type (format "create -type %s %s" l-type (vc-rational-synergy-platformify-path l-filename)) (format "create %s" (vc-rational-synergy-platformify-path l-filename))))
+	 (l-attr-command      (when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-filename))))
 	 (l-message	      (format "Starting registration of %s..." l-filename))
 	 )
     (vc-cmsyn-run-command l-message l-create-command 'vc-cmsyn-sentinel-register-file nil (not p-dont-check-task))
@@ -335,7 +180,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 ;; ;;     (vc-cmsyn-show-buffer)
 ;;     (pop-to-buffer (vc-cmsyn-buffer))
     (when l-attr-command (vc-cmsyn-run-command "Setting version..." l-attr-command)))
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -346,7 +191,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Parameters    : P-DIRECTORY: if supplied, this directory will be registered, otherwise dir will be current directory.
   Returns       : "
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let*
       (
        (l-type			(or p-type (when vc-cmsyn-query-create-file-type (read-string "Type of the files in the Directory: " ""))))
@@ -355,7 +200,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 				    (if (equal major-mode 'dired-mode)
 					(if (listp dired-directory) (car dired-directory) dired-directory)
 				      (file-name-directory (buffer-file-name)))))
-       (l-attr-command		(when l-version (format "attr -modify version -value %s %s" l-version (vc-cmsyn-platformity-path l-dir))))
+       (l-attr-command		(when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-dir))))
        (l-recursive-p		(or p-directory (y-or-n-p (format "Recursive Register %s?" l-dir))))
        (l-files			(delq nil (directory-files l-dir t "\\(^[^\\.]\\|^\\.[^.]\\)")))
        ;;        (l-check-task-set	(not p-directory)) ;;when called recursively the check has been done already
@@ -368,9 +213,9 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 	    (when (string-match p-regexp l-dir) (error "Directory %s should not be registered in Synergy according to a filter defined in `vc-cmsyn-register-directory-and-files-filter'" l-dir))
 	    ) vc-cmsyn-register-directory-and-files-filter)
     (message "Registering Directory: -%s-..." l-dir)
-;;;     (setq l-string (vc-cmsyn-command-to-string "create" "-type" "dir" (vc-cmsyn-platformity-path l-dir))) ;; have to do this sync, because of multipe actions
-    (setq l-create-command	(format "create -type dir %s" (vc-cmsyn-platformity-path l-dir)))
-    (setq l-string (vc-cmsyn-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
+;;;     (setq l-string (vc-rational-synergy-command-to-string "create" "-type" "dir" (vc-rational-synergy-platformify-path l-dir))) ;; have to do this sync, because of multipe actions
+    (setq l-create-command	(format "create -type dir %s" (vc-rational-synergy-platformify-path l-dir)))
+    (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
     (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
     (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Registering %s" l-dir))
     (dolist (i-file l-files)
@@ -387,29 +232,29 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 	    (when l-recursive-p
 	      (vc-cmsyn-create-directory i-file l-type) ;; recursive call
 	      )
-	  (setq l-file (vc-cmsyn-platformity-path i-file))
+	  (setq l-file (vc-rational-synergy-platformify-path i-file))
 	  (message "Registering: %s" l-file)
 ;;; 	  (setq l-string (if l-type ;; type determined from extension
-;;; 			     (vc-cmsyn-command-to-string "create" "-type" l-type l-file)
-;;; 			   (vc-cmsyn-command-to-string "create" l-file)))
+;;; 			     (vc-rational-synergy-command-to-string "create" "-type" l-type l-file)
+;;; 			   (vc-rational-synergy-command-to-string "create" l-file)))
 	  (setq l-create-command
 		(if l-type (format "create -type %s %s" l-type l-file)
 		  (format "create %s" l-file))) ;; type determined from extension
 	  (message "Registering: %s" l-file)
-	  (setq l-string (vc-cmsyn-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
+	  (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
 	  (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
 	  (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Registering %s, see Synergy output-buffer for details" l-dir))
 	  (when l-version
-;;; 	    (setq l-string (vc-cmsyn-command-to-string "attr" "-modify" "version" "-value" l-version l-file))
+;;; 	    (setq l-string (vc-rational-synergy-command-to-string "attr" "-modify" "version" "-value" l-version l-file))
 	    (setq l-attr-command (format "attr -modify version -value %s %s" l-version l-file))
-	    (setq l-string (vc-cmsyn-command-to-string l-attr-command))
+	    (setq l-string (vc-rational-synergy-command-to-string l-attr-command))
 	    (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
 	    (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Setting version %s at %s" l-version l-file))
 	    )
 	  (when vc-cmsyn-register-checks-in-p
 	    (message "Checking in: %s" l-file)
-;;; 	    (setq l-string (vc-cmsyn-command-to-string "ci" "-c" "\"Checked in new file after registering\"" l-file))
-	    (setq l-string (vc-cmsyn-command-to-string (format "ci -c \"Checked in new file after registering\" %s" l-file)))
+;;; 	    (setq l-string (vc-rational-synergy-command-to-string "ci" "-c" "\"Checked in new file after registering\"" l-file))
+	    (setq l-string (vc-rational-synergy-command-to-string (format "ci -c \"Checked in new file after registering\" %s" l-file)))
 	    )
 	  )
 	)
@@ -417,7 +262,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
     (message "Registering Directory: -%s-...done" l-dir)
     (vc-cmsyn-show-output-buffer)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;(defun vc-cmsyn-create-directory ()
@@ -427,7 +272,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 ;;  Parameters    : 
 ;;  Returns       : "
 ;;  (interactive)
-;;;  (vc-cmsyn-check-login)
+;;;  (vc-rational-synergy-check-session)
 ;;;;   (when vc-cmsyn-check-default-task-set-p (vc-cmsyn-check-task-set t))
 ;;  (let* ((l-version	      (when vc-cmsyn-query-create-file-version (read-string "Version of the Directory: " "")))
 ;;	 (l-filename	      (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
@@ -441,7 +286,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 ;;;; ;;     (vc-cmsyn-show-buffer)
 ;;;;     (pop-to-buffer (vc-cmsyn-buffer))
 ;;    (when l-attr-command (vc-cmsyn-run-command "Setting version..." l-attr-command)))
-;;;   (vc-cmsyn-check-logout)
+;;;   (vc-rational-synergy-check-session-pause)
 ;;; )
 
 ;;;###autoload
@@ -453,7 +298,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : checks task set before trying to check-in
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (when (buffer-modified-p)
     (if (y-or-n-p "Buffer is modified, save buffer first?")
 	(save-buffer)
@@ -461,15 +306,15 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
       (run-with-timer 3 nil 'message "")
       )
     )
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let*
       (
        (l-filename  (buffer-file-name))
        (l-comment   (or p-comment-string (read-string "Checkin-comment (newlines with S-ret, RET when done): ")))
        (l-message   (format "Starting check in of %s..." l-filename))
        (l-command   (if (zerop (length l-comment))
-			(format "ci -nc %s" (vc-cmsyn-platformity-path l-filename))
-		      (format "ci -c \"%s\" %s" l-comment (vc-cmsyn-platformity-path l-filename))))
+			(format "ci -nc %s" (vc-rational-synergy-platformify-path l-filename))
+		      (format "ci -c \"%s\" %s" l-comment (vc-rational-synergy-platformify-path l-filename))))
        l-proc
        )
 ;;     (message " !! Running ci command: -%s-" l-command)
@@ -484,7 +329,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 ;;     (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
 ;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-ci-file)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -496,7 +341,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : 
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (when (buffer-modified-p)
     (if (y-or-n-p "Buffer is modified, save buffer first?")
 	(save-buffer)
@@ -510,13 +355,13 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
        (l-comment (read-string "Checkin-comment (newlines with S-ret, RET when done): "))
        (l-message (format "Starting Check in of %s..." l-filename))
        (l-command   (if (zerop (length l-comment))
-			(format "ci -nc %s" (vc-cmsyn-platformity-path l-filename))
-		      (format "ci -c \"%s\" %s" l-comment (vc-cmsyn-platformity-path l-filename))))
+			(format "ci -nc %s" (vc-rational-synergy-platformify-path l-filename))
+		      (format "ci -c \"%s\" %s" l-comment (vc-rational-synergy-platformify-path l-filename))))
        l-proc
        )
     (vc-cmsyn-run-command l-message l-command 'vc-cmsyn-sentinel-ci-directory nil t)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -527,14 +372,14 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Returns       : 
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let* (
 	 (l-filename (buffer-file-name))
-	 (l-command (format "history %s -g" (vc-cmsyn-platformity-path l-filename)))
+	 (l-command (format "history %s -g" (vc-rational-synergy-platformify-path l-filename)))
 	 )
     (vc-cmsyn-run-command "Retrieving history..." l-command 'vc-cmsyn-sentinel-history-graphics)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -545,14 +390,14 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Returns       : 
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let* (
 	 (l-filename (buffer-file-name))
-	 (l-command (format "history %s" (vc-cmsyn-platformity-path l-filename)))
+	 (l-command (format "history %s" (vc-rational-synergy-platformify-path l-filename)))
 	 )
     (vc-cmsyn-run-command "Retrieving history..." l-command)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -563,14 +408,14 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Returns       : 
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let* (
 	 (l-filename (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
-	 (l-command (format "history %s -g" (vc-cmsyn-platformity-path l-filename)))
+	 (l-command (format "history %s -g" (vc-rational-synergy-platformify-path l-filename)))
 	 )
     (vc-cmsyn-run-command "Retrieving history..." l-command 'vc-cmsyn-sentinel-history-graphics)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -581,14 +426,14 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Returns       : 
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let* (
 	 (l-filename (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
-	 (l-command (format "history %s" (vc-cmsyn-platformity-path l-filename)))
+	 (l-command (format "history %s" (vc-rational-synergy-platformify-path l-filename)))
 	 )
     (vc-cmsyn-run-command "Retrieving history..." l-command)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -599,7 +444,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Parameters    : 
   Returns       : "
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let* 
       ((l-message "Starting check in Task...")
        (l-comment (read-string "Checkin-comment (newlines with S-RET, RET when done): " ))
@@ -613,7 +458,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 ;;     (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
 ;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-ci-task)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -625,10 +470,10 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : When configured to do so, iconifies frame so the CM Synergy gui becomes visible
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
 ;;   (vc-cmsyn-show-buffer)
   (vc-cmsyn-run-command "Retrieving Current Default Task" "task -default")
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -640,7 +485,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Methodology   : When configured to do so, iconifies frame so the CM Synergy gui becomes visible
   Author        : Realworld Systems (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
 ;;   (vc-cmsyn-show-buffer)
   (let* 
       (
@@ -650,7 +495,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
        )
     (vc-cmsyn-run-command (format "Retrieving files for task %s..." l-string) (format "task -show objects -f \"%%objectname\" %s" l-task))
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -661,7 +506,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Parameters    : 
   Returns       : -"
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (message "Retrieving files for task ...")
   (let* 
       (
@@ -669,8 +514,8 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
        (l-dummy		      (progn (message "Retrieving files for task %s..." l-string) l-string))
        (l-list		      (split-string l-string ":"))
        (l-task		      (car l-list)) ;; the nr.
-;;;        (l-objects-string      (vc-cmsyn-command-to-string "task" "-show" "objects" "-f" "\"%%objectname@:@%%status\"" l-task))
-       (l-objects-string      (vc-cmsyn-command-to-string (format "task -show objects -f \"%%objectname@:@%%status\" %s" l-task)))
+;;;        (l-objects-string      (vc-rational-synergy-command-to-string "task" "-show" "objects" "-f" "\"%%objectname@:@%%status\"" l-task))
+       (l-objects-string      (vc-rational-synergy-command-to-string (format "task -show objects -f \"%%objectname@:@%%status\" %s" l-task)))
        (l-lines		      (split-string l-objects-string "\n"))
        (l-objects-list	      (delq nil
 				    (mapcar (lambda (p-line)
@@ -689,8 +534,8 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 						     (l-type-data     (when (not (equal l-extension "dir")) (vc-cmsyn-patch-type-data-for-file-type l-extension)))
 ;;; 						     (l-type-data     (when (not (equal l-type "dir")) (assoc l-type vc-cmsyn-patch-types)))
 						     (l-object-query  (when l-type-data (format "\"name= '%s'  and version= '%s' and type='%s' and instance='%s' and is_hist_leaf()\"" l-file-leaf l-version (nth 1 l-name-parts) (nth 2 l-name-parts))))
-;;; 						     (l-latest-test   (when l-type-data (vc-cmsyn-command-to-string "query" l-object-query)))
-						     (l-latest-test   (when l-type-data (vc-cmsyn-command-to-string (format "query %s" l-object-query))))
+;;; 						     (l-latest-test   (when l-type-data (vc-rational-synergy-command-to-string "query" l-object-query)))
+						     (l-latest-test   (when l-type-data (vc-rational-synergy-command-to-string (format "query %s" l-object-query))))
 						     (l-latest-p      (when l-type-data (not (zerop (length l-latest-test)))))
 						     )
 						(when l-latest-p l-object-name)
@@ -712,7 +557,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
       )
     (message "Retrieving files for task %s...done" l-string)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 (defun vc-cmsyn-default-task (&optional p-error-p)
@@ -723,8 +568,8 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Returns       : string, nil or generates error"
   (let* 
       (
-;;;        (l-string	      (vc-cmsyn-command-to-string "task" "-default"))
-       (l-string	      (vc-cmsyn-command-to-string "task -default"))
+;;;        (l-string	      (vc-rational-synergy-command-to-string "task" "-default"))
+       (l-string	      (vc-rational-synergy-command-to-string "task -default"))
        (l-list		      (split-string l-string ":"))
        (l-error		      (when (and p-error-p
 					 (or (<= (length l-list) 1) (string-match vc-cmsyn-warning-error-output-regexp (car l-list))))
@@ -742,18 +587,18 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 (defun vc-cmsyn-properties ()
   "Display the properties of the file in the work buffer."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let* ((l-filename (buffer-file-name))
-	 (l-prop-command (format "prop %s" (vc-cmsyn-platformity-path l-filename))))
+	 (l-prop-command (format "prop %s" (vc-rational-synergy-platformify-path l-filename))))
 ;;     (vc-cmsyn-show-buffer)
     (vc-cmsyn-run-command "Properties..." l-prop-command))
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 (defun vc-cmsyn-create-task ()
   "Create a new task"
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (vc-cmsyn-report "Starting create Task...")
 ;;   (vc-cmsyn-show-buffer "Starting create Task...")
   (let*
@@ -761,26 +606,26 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
        (l-proc (start-process vc-cmsyn-exe-name (vc-cmsyn-buffer)
 					    vc-cmsyn-exe-name "create_task" "-g")))
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
 (defun vc-cmsyn-set-ccmAddr ()
   "Read ccmAddr from the user"
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let*
       (
        (l-ccm-addr (read-string "Enter CCM_ADDR (like <machine-name>:<number><ip-address-Synergy-server>: " (or (getenv "CCM_ADDR") "")))
        )
     (setenv "CCM_ADDR" l-ccm-addr))
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;(defun vc-cmsyn-create ()
 ;;  "Creates the current file in CM Synergy, asks the user for a type and version"
 ;;  (interactive)
-;;  (vc-cmsyn-check-login)
+;;  (vc-rational-synergy-check-session)
 ;;  (let* ((type (read-string "Type of the file: " ""))
 ;;	 (version (read-string "Version of the file: " ""))
 ;;	 (filename (file-name-directory (buffer-file-name)))
@@ -792,7 +637,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 ;;    (vc-cmsyn-show-buffer)
 ;;    (vc-cmsyn-run-command "Creating file..." create-command)
 ;;    (vc-cmsyn-run-command "Setting version..." attr-command))
-;;   (vc-cmsyn-check-logout)
+;;   (vc-rational-synergy-check-session-pause)
 ;;)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -832,7 +677,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
 	  (push 'shell-strip-ctrl-m
 		comint-output-filter-functions))
 ;;;     (message "!! env now: -%s-" (getenv "ccm_addr"))
-;;;     (message "!! task-string: -%s-, p-command: -%s-" (vc-cmsyn-command-to-string "ccm task -default") p-command)
+;;;     (message "!! task-string: -%s-, p-command: -%s-" (vc-rational-synergy-command-to-string "ccm task -default") p-command)
     (setq l-proc (apply 'start-process vc-cmsyn-exe-name l-proc-buffer
 			vc-cmsyn-exe-name (vc-cmsyn-split-string-carefully p-command))) ;; the arguments need to be a list since emacs20
     (vc-cmsyn-map-proc-and-buffer l-proc l-current-buffer)
@@ -1022,78 +867,6 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   (setq vc-cmsyn-proc-buffer-mappings (assq-delete-all p-proc vc-cmsyn-proc-buffer-mappings))
   )
 
-(defun vc-cmsyn-int-update-modeline (p-vc-cmsyn-string)
-  "Do put P-VC-CMSYN-STRING in the modeline.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-VC-CMSYN-STRING: the id for this file in the modeline
-  Returns       : -"
-  (setq vc-cmsyn-modeline-string p-vc-cmsyn-string)
-  (set (intern "mode-line-buffer-identification") 'vc-cmsyn-modeline-string)
-  (when (get-buffer-window (current-buffer) 0)
-    (redraw-modeline)
-    )
-  )
-
-;;;###autoload
-(defun vc-cmsyn-update-modeline ()
-  "Show file name, version and status in the modeline, retrieving the information asynchronously so user doesnt' have to wait.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : Partly copied from ccm-update-modeline, made asynchronous
-  Author        : Realworld Systems (GR)."
-  (interactive)
-  (vc-cmsyn-check-login)
-  (when (buffer-file-name) ;; only if we are in a file there is version-information to display
-    (let* ((l-filename (file-name-nondirectory (buffer-file-name)))
-	   ;; ----------
-	   ;; retrieve the output with proc with filter, mode-line is updated by filter
-	   ;; ----------
-	   l-proc l-string
-	   )
-      (setq comint-output-filter-functions
-	    (push 'shell-strip-ctrl-m
-		  comint-output-filter-functions))
-      ;; ----------
-      ;; set temp modeline-info (while waiting for the correct info from ccm)
-      ;; ----------
-      (setq l-string (format "%s-%s" l-filename "CMSynergyRetrievingVersion..."))
-      (vc-cmsyn-int-update-modeline l-string)
-;;       (message "!! direct string: -%s-" (vc-cmsyn-command-to-string (format "ccm ls -f %s" (format "\"%%version@@%%status\" %s" (vc-cmsyn-platformity-path (buffer-file-name))))))
-      ;; ----------
-      ;; Changed: GR: calling `start-process' seems to give hanging
-      ;; processes now and then. Changed to `call-process' therefore
-      ;; ----------
-      (setq l-string (vc-cmsyn-command-to-string (format "ls -f \"%%version@@%%status\" %s" (vc-cmsyn-platformity-path (buffer-file-name)))))
-      ;; ----------
-      ;; put the info from CM Synergy in the mode-line
-      ;; ----------
-      (message "!! CCM VERSION-String: -%s-" l-string)
-      (save-match-data
-	(let* 
-	    (
-	     ;; ----------
-	     ;; Split the answer at : if there is no error-message
-	     ;; there may be text before the answer: chop off, the answer is a line
-	     ;; of its own, the last
-	     ;; ----------
-	     (l-ccm-version (if (and (string-match "\\(.*\n\\)*\\([^@\n]+\\)@@\\([^@\n]+\\)\n" l-string)
-				     (not (string-match vc-cmsyn-warning-error-output-regexp l-string))
-				     )
-				(format "%s:%s"(match-string 2 l-string) (match-string 3 l-string))
-			      "CMSynergyVersion??"))
-	     (l-buffer (current-buffer))
-	     (l-writable-string (if buffer-read-only "-" ":"))
-	     (l-filename (vc-cmsyn-platformity-path (file-name-nondirectory (buffer-file-name))))
-	     )
-	  (vc-cmsyn-int-update-modeline (format "%s%s%s" l-filename l-writable-string l-ccm-version))
-	  )
-	)
-      )
-    )
-  (vc-cmsyn-check-logout)
-  )
 
 (defun vc-cmsyn-sentinel (p-process p-what &optional p-dont-popup-process-buffer)
   "Function running at the end of a ccm process, called directly as sentinel, *or* from specific sentinels for specific funtions.
@@ -1191,7 +964,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
       (when vc-cmsyn-auto-check-in-directory-p
 	(let* 
 	    (
-	     (l-filename (vc-cmsyn-platformity-path (buffer-file-name)))
+	     (l-filename (vc-rational-synergy-platformify-path (buffer-file-name)))
 	     (l-dir (file-name-directory l-filename))
 	     (l-proc (start-process
 		      "vc-cmsyn"
@@ -1461,31 +1234,6 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   (vc-cmsyn-sentinel p-process p-what t) ;; standard finish, but don't popup the process-buffer, would cover the graphics-history-output
   )
 
-(defun vc-cmsyn-sentinel-start-classic-gui (p-process p-what)
-  "Function running when the ccm login process is done.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: ccm process
-                  P-WHAT: change in process
-  Returns       : "
-  (save-excursion
-    (let* 
-	(
-	 l-ccm-addr l-string
-	 )
-      (set-buffer (process-buffer p-process))
-      (goto-char (point-max))
-      (if (not (re-search-backward "address is \\(.+\\)\\.?$" nil t))
-	  (setenv "CCM_ADDR" nil t) ;; not found, ??, make sure to unset for now!
-	(setq l-ccm-addr (match-string 1))
-	(when (string-match "\\(\.[ \t]*\\)\\'" l-ccm-addr) (setq l-ccm-addr (replace-match "" t t l-ccm-addr 1))) ;; chopp off last dot
-	(setenv "CCM_ADDR" l-ccm-addr)
-	)
-      )
-    )
-  (vc-cmsyn-sentinel p-process p-what) ;; standard finish
-  )
-
 (defun vc-cmsyn-sentinel-start-developers-gui (p-process p-what)
   "Function running when the ccm login process is done.
   Author        : Realworld Systems (GR)
@@ -1497,8 +1245,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   (save-excursion
     (let* 
 	(
-;;; 	 (l-string (vc-cmsyn-command-to-string "status")) ;; find out ccm_addr cli
-	 (l-string (vc-cmsyn-command-to-string "status")) ;; find out ccm_addr cli
+	 (l-string (vc-rational-synergy-command-to-string "status")) ;; find out ccm_addr cli
 	 (l-ccm-addr (progn (when (string-match  "^Command[ \t]+Interface[ \t]+@ \\(.*\\)[ \t]*\\((current session)\\)?[ \t]*$" l-string) (match-string 1 l-string))))
 	 l-string
 	 )
@@ -1561,54 +1308,6 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
        (delete-char 1))))
 
 
-;;;###autoload
-(defun vc-cmsyn-start ()
-  "Start a ccm session.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : "
-  (interactive)
-  (if vc-cmsyn-use-developers-gui-p
-      (let* 
-	  (
-	   (l-current-buffer (current-buffer))
-	   (l-proc-buffer (vc-cmsyn-buffer))
-	   l-proc
-	   )
-	;; ----------
-	;; do not call vc-cmsyn-run-command in this case since that would call
-	;; cmm and we need to call cmsynergy now!
-	;; ----------
-	(setq l-proc (start-process vc-cmsyn-exe-name l-proc-buffer vc-cmsyn-developers-gui-exe-name))
-	(vc-cmsyn-map-proc-and-buffer l-proc l-current-buffer)
-	(set-process-sentinel l-proc 'vc-cmsyn-sentinel-start-developers-gui)
-	)
-    (when vc-cmsyn-auto-login-logout ;; make sure when using the GUI there is no auto-login but connection is with the GUI
-      (message-box "Auto-login-logout switched off becauswe of GUI-interface")
-      (setq vc-cmsyn-auto-login-logout nil)
-      ) 
-    (vc-cmsyn-run-command "Logging in to CM Synergy..." "start" 'vc-cmsyn-sentinel-start-classic-gui)
-    ;;  (vc-cmsyn-run-command "Logging in to CM Synergy..." "start -g -q" 'vc-cmsyn-sentinel-start)
-    )
-  ;; ----------
-  ;; The start-panel *does* come up above the current window so in this
-  ;; case our emacs frame doesn't have to be iconized
-  ;; ----------
-  ;; (when vc-cmsyn-iconify-frame-when-ccm-gui (iconify-frame))
-  ;;   (start-process "ccm" (vc-cmsyn-buffer) vc-cmsyn-exe-name "start")
-  )
-
-;;;###autoload
-(defun vc-cmsyn-stop ()
-  "Stop a ccm session.
-  Author        : Realworld Systems (GR)
-  Date          : Mar/2004
-  Parameters    : 
-  Returns       : "
-  (interactive)
-  (vc-cmsyn-run-command "Logging out from CM Synergy..." "stop")
-  )
 
 ;;;###autoload
 (defun vc-cmsyn-select-task ()
@@ -1618,12 +1317,12 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Parameters    : 
   Returns       : -"
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (if vc-cmsyn-use-developers-gui-p
       (vc-cmsyn-select-task-cli)
     (vc-cmsyn-select-task-gui)
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 (defun vc-cmsyn-select-task-cli ()
@@ -1634,7 +1333,7 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Returns       : -"
   (interactive)
   (message "!! vc-cmsyn-select-task-cli")
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   ;; ----------
   ;; Use the command-interface to retrieve the tasks which will be
   ;; presented 'tabbable' to the user to select 1
@@ -1642,14 +1341,14 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   (message "  !! vc-cmsyn-select-task-cli2")
   (let* 
       (
-;;;        (l-status-string (vc-cmsyn-command-to-string "status"))
+;;;        (l-status-string (vc-rational-synergy-command-to-string "status"))
 ;;;        (a (message "  !! status-string+ -%s-" l-status-string))
-      (l-status-string (vc-cmsyn-command-to-string "status"))
+      (l-status-string (vc-rational-synergy-command-to-string "status"))
        (l-user (when (string-match "^Sessions for user[ \t]+\\([^:]+\\):" l-status-string) (match-string 1 l-status-string)))
 ;;;        (b (message "  !! user: -%s-" l-user))
-;;;        (l-task-list-string (when l-user (vc-cmsyn-command-to-string "query" (format "\"status='task_assigned' and resolver='%s'\"" l-user) "-f" "\"%%task_number:%%task_description:%%task_synopsis\"" )))
+;;;        (l-task-list-string (when l-user (vc-rational-synergy-command-to-string "query" (format "\"status='task_assigned' and resolver='%s'\"" l-user) "-f" "\"%%task_number:%%task_description:%%task_synopsis\"" )))
 ;;;        (c (message "  !! stasklist: -%s-" l-task-list-string))
-       (l-task-list-string (when l-user (vc-cmsyn-command-to-string (format "query \"status='task_assigned' and resolver='%s'\" -f \"%%task_number:%%task_description:%%task_synopsis\"" l-user))))
+       (l-task-list-string (when l-user (vc-rational-synergy-command-to-string (format "query \"status='task_assigned' and resolver='%s'\" -f \"%%task_number:%%task_description:%%task_synopsis\"" l-user))))
        (l-task-list (mapcar (lambda (p-entry)
 			      (let* 
 				  (
@@ -1667,12 +1366,12 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
     (message "  !! vc-cmsyn-select-task-cli 3")
     (if (<= (length l-task) 0)
 	(message-box "Task not set!")
-;;;       (vc-cmsyn-command-to-string "task" "-default" l-task)
-     (vc-cmsyn-command-to-string (format "task -default %s" l-task))
+;;;       (vc-rational-synergy-command-to-string "task" "-default" l-task)
+     (vc-rational-synergy-command-to-string (format "task -default %s" l-task))
       (message-box "Task set to %s!" l-task)
       )
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 (defun vc-cmsyn-select-task-gui ()
@@ -1682,14 +1381,14 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   Parameters    : 
   Returns       : -"
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   ;;   (vc-cmsyn-show-buffer "Calling select Task GUI...")
   (vc-cmsyn-run-command "Calling select Task GUI..." "task -default -g" )
   ;;  (let* ((proc (start-process "ccm" (vc-cmsyn-buffer)
   ;;                                           vc-cmsyn-exe-name "task" "-default" "-g")))
   ;;    )
   (when vc-cmsyn-iconify-frame-when-ccm-gui (iconify-frame))
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 (defun vc-cmsyn-check-task-set (&optional p-signal-error)
@@ -1701,8 +1400,8 @@ command-string is passed to ccm via ascii-file to avoid quoting-problems.
   (message "Checking ccm task...")
   (let* 
       (
-;;;        (l-string (vc-cmsyn-command-to-string "task" "-default"))
-      (l-string (vc-cmsyn-command-to-string "task -default" ))
+;;;        (l-string (vc-rational-synergy-command-to-string "task" "-default"))
+      (l-string (vc-rational-synergy-command-to-string "task -default" ))
        )
     (if (string-match "The default task is not set\\." l-string)
 	(if p-signal-error
@@ -1787,11 +1486,11 @@ NB: called from within a hook, careful with errors!
   Parameters    : 
   Returns       : string or nil"
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (let* 
       (
-;;;        (l-string (vc-cmsyn-command-to-string "status"))
-      (l-string (vc-cmsyn-command-to-string "status"))
+;;;        (l-string (vc-rational-synergy-command-to-string "status"))
+      (l-string (vc-rational-synergy-command-to-string "status"))
        )
     (save-match-data
       (when (string-match "^Current project:[ \t]+\'\\([^\']+\\)\'" l-string)
@@ -1799,7 +1498,7 @@ NB: called from within a hook, careful with errors!
 	)
       )
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;; ----------
@@ -1817,8 +1516,8 @@ NB: called from within a hook, careful with errors!
 ;;;   (save-match-data
 ;;;     (let* 
 ;;; 	(
-;;; 	 (l-string (vc-cmsyn-command-to-string "-p" "-f" "\"%project:%version:%release:owner\""))
-;;; ;;;	 (l-string (vc-cmsyn-command-to-string (format "%s -p -f \"%project:%version:%release:owner" vc-cmsyn-exe-name)))
+;;; 	 (l-string (vc-rational-synergy-command-to-string "-p" "-f" "\"%project:%version:%release:owner\""))
+;;; ;;;	 (l-string (vc-rational-synergy-command-to-string (format "%s -p -f \"%project:%version:%release:owner" vc-cmsyn-exe-name)))
 ;;; 	 l-projects
 ;;; 	 )
 ;;;       (when (not (string-match "^[ \t]*[0-9]+\)[ \t]*\\(.*\\)$" l-string)) (error "No projects found!"))
@@ -1888,7 +1587,7 @@ NB: called from within a hook, careful with errors!
   Methodology   : 
   Author        : Realworld OO Systems B.V. (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (when (not (vc-cmsyn-responsible-p (buffer-file-name))) ;; 'cheap' test: it may not have been registered still!
     (error "File %s is not in a CM Synergy Workarea!" (buffer-file-name))
     )
@@ -1898,8 +1597,8 @@ NB: called from within a hook, careful with errors!
 	 (l-file          (buffer-file-name))
 	 (l-v1            (read-string "Older version: "))
 	 (l-v2            (read-string "Newer version: "))
-;;; 	 (l-object-name   (vc-cmsyn-command-to-string "ls" "-f" "\"%%objectname\"" (vc-cmsyn-platformity-path l-file)))
-	 (l-object-name   (vc-cmsyn-command-to-string (format "ls -f \"%%objectname\" %s" (vc-cmsyn-platformity-path l-file))))
+;;; 	 (l-object-name   (vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
+	 (l-object-name   (vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	 l-low-buffer l-high-buffer l-string1 l-string2 l-file1 l-file2
 	 )
       (if (not (string-match vc-cmsyn-object-name-regexp l-object-name))
@@ -1907,12 +1606,12 @@ NB: called from within a hook, careful with errors!
 	(save-match-data (when (string-match "\\(.*\\)\n$" l-object-name) (setq l-object-name (match-string 1 l-object-name))))
 	(setq l-file1 (replace-match l-v1 nil nil l-object-name 1))
 	(setq l-file2 (replace-match l-v2 nil nil l-object-name 1))
-;;; 	(setq l-string1 (vc-cmsyn-command-to-string "cat" l-file1))
-	(setq l-string1 (vc-cmsyn-command-to-string (format "cat %s" l-file1)))
+;;; 	(setq l-string1 (vc-rational-synergy-command-to-string "cat" l-file1))
+	(setq l-string1 (vc-rational-synergy-command-to-string (format "cat %s" l-file1)))
 	(when (string-match vc-cmsyn-warning-error-output-regexp l-string1)
 	  (error (format "CM Synergy Error: %s" l-string1)))
-;;; 	(setq l-string2 (vc-cmsyn-command-to-string "cat" l-file2))
-	(setq l-string2 (vc-cmsyn-command-to-string (format "cat %s" l-file2)))
+;;; 	(setq l-string2 (vc-rational-synergy-command-to-string "cat" l-file2))
+	(setq l-string2 (vc-rational-synergy-command-to-string (format "cat %s" l-file2)))
 	(when (string-match vc-cmsyn-warning-error-output-regexp l-string2)
 	  (error (format "CM Synergy Error: %s" l-string2)))
 	(save-excursion
@@ -1940,7 +1639,7 @@ NB: called from within a hook, careful with errors!
 	)
       )
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -1953,7 +1652,7 @@ NB: called from within a hook, careful with errors!
   Methodology   : 
   Author        : Realworld OO Systems B.V. (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (when  (not (vc-cmsyn-responsible-p (buffer-file-name))) ;; 'cheap' test: it may not have been registered still!
     (error "File %s is not in a CM Synergy Workarea!" (buffer-file-name))
     )
@@ -1962,8 +1661,8 @@ NB: called from within a hook, careful with errors!
 	(
 	 (l-file          (buffer-file-name))
 	 (l-v1            (read-string "Other version: "))
-;;; 	 (l-object-name   (vc-cmsyn-command-to-string "ls" "-f" "\"%%objectname\"" (vc-cmsyn-platformity-path l-file)))
-	 (l-object-name   (vc-cmsyn-command-to-string (format "ls -f \"%%objectname\" %s" (vc-cmsyn-platformity-path l-file))))
+;;; 	 (l-object-name   (vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
+	 (l-object-name   (vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	 (l-high-buffer    (current-buffer))
 	 l-low-buffer l-string1 l-string2 l-file1 l-file2
 	 )
@@ -1971,8 +1670,8 @@ NB: called from within a hook, careful with errors!
 	  (error "Couldnt retrieve the right file-information from CMSynergy: %s" l-object-name)
 	(save-match-data (when (string-match "\\(.*\\)\n$" l-object-name) (setq l-object-name (match-string 1 l-object-name))))
 	(setq l-file1 (replace-match l-v1 nil nil l-object-name 1))
-;;; 	(setq l-string1 (vc-cmsyn-command-to-string "cat" l-file1))
-	(setq l-string1 (vc-cmsyn-command-to-string (format "cat %s" l-file1)))
+;;; 	(setq l-string1 (vc-rational-synergy-command-to-string "cat" l-file1))
+	(setq l-string1 (vc-rational-synergy-command-to-string (format "cat %s" l-file1)))
 	(when (string-match vc-cmsyn-warning-error-output-regexp l-string1)
 	  (error (format "CM Synergy Error: %s" l-string1)))
 	(save-excursion
@@ -1990,7 +1689,7 @@ NB: called from within a hook, careful with errors!
 	)
       )
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
@@ -2002,7 +1701,7 @@ NB: called from within a hook, careful with errors!
   Methodology   : 
   Author        : Realworld OO Systems B.V. (GR)."
   (interactive)
-  (vc-cmsyn-check-login)
+  (vc-rational-synergy-check-session)
   (when  (not (vc-cmsyn-responsible-p (buffer-file-name))) ;; 'cheap' test: it may not have been registered still!
     (error "File %s is not in a CM Synergy Workarea!" (buffer-file-name))
     )
@@ -2010,8 +1709,8 @@ NB: called from within a hook, careful with errors!
     (let* 
 	(
 	 (l-file          (buffer-file-name))
-;;; 	 (l-object-name   (vc-cmsyn-command-to-string "ls" "-f" "\"%%objectname\"" (vc-cmsyn-platformity-path l-file)))
-	 (l-object-name   (vc-cmsyn-command-to-string (format "ls -f \"%%objectname\" %s" (vc-cmsyn-platformity-path l-file))))
+;;; 	 (l-object-name   (vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
+	 (l-object-name   (vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	 (l-high-buffer   (current-buffer))
 	 l-parent-object-name l-low-buffer l-parent-object-name-string l-parent-object-name l-string1 l-lines
 	 )
@@ -2026,8 +1725,8 @@ NB: called from within a hook, careful with errors!
 	     (setq l-parent-object-name (completing-read "More than 1 ancestor, choose which 1 to compare [tab to complete]: " l-parent-object-name))
 	     )
 	    )
-;;;       (setq l-string1 (vc-cmsyn-command-to-string "cat" l-parent-object-name))
-     (setq l-string1 (vc-cmsyn-command-to-string (format "cat %s" l-parent-object-name)))
+;;;       (setq l-string1 (vc-rational-synergy-command-to-string "cat" l-parent-object-name))
+     (setq l-string1 (vc-rational-synergy-command-to-string (format "cat %s" l-parent-object-name)))
       (when (string-match vc-cmsyn-warning-error-output-regexp l-string1)
 	      (error (format "CM Synergy Error: %s" l-string1)))
       (save-excursion
@@ -2044,7 +1743,7 @@ NB: called from within a hook, careful with errors!
       (ediff-buffers l-low-buffer l-high-buffer)
       )
     )
-  (vc-cmsyn-check-logout)
+  (vc-rational-synergy-check-session-pause)
   )
 
 (defun vc-cmsyn-parent-4-part-name (p-4-part-name)
@@ -2055,8 +1754,8 @@ NB: called from within a hook, careful with errors!
   Returns       : String or list with strings (if more than 1 ancessor)"
   (let* 
       (
-;;;        (l-parent-object-name-string (vc-cmsyn-command-to-string "query" (format "\"is_predecessor_of ('%s')\"" p-4-part-name) "-f" "\"%%objectname\""))
-      (l-parent-object-name-string (vc-cmsyn-command-to-string (format "query \"is_predecessor_of ('%s')\" -f \"%%objectname\"" p-4-part-name)))
+;;;        (l-parent-object-name-string (vc-rational-synergy-command-to-string "query" (format "\"is_predecessor_of ('%s')\"" p-4-part-name) "-f" "\"%%objectname\""))
+      (l-parent-object-name-string (vc-rational-synergy-command-to-string (format "query \"is_predecessor_of ('%s')\" -f \"%%objectname\"" p-4-part-name)))
        (l-lines (split-string l-parent-object-name-string "\n"))
        )
     (if (equal (length l-lines) 1)
@@ -2080,8 +1779,8 @@ NB: called from within a hook, careful with errors!
   (let* 
       (
 ;;        (l-project-name	 (save-match-data (string-match (format "^\\([^%s]+\\)%s" vc-cmsyn-version-object-separator vc-cmsyn-version-object-separator) p-project-name-version) (match-string 1 p-project-name-version)))
-;;;        (l-wa-string	 (vc-cmsyn-command-to-string "attr" "-show" "wa_path" "-project" p-project-name-version)) ;; workarea output
-      (l-wa-string	 (vc-cmsyn-command-to-string (format "attr -show wa_path -project %s" p-project-name-version))) ;; workarea output
+;;;        (l-wa-string	 (vc-rational-synergy-command-to-string "attr" "-show" "wa_path" "-project" p-project-name-version)) ;; workarea output
+      (l-wa-string	 (vc-rational-synergy-command-to-string (format "attr -show wa_path -project %s" p-project-name-version))) ;; workarea output
        (l-wa-path	 (save-match-data (string-match "^\\(.*\\)[ \t]*\n?" l-wa-string) (match-string 1 l-wa-string))) ;; strip off \n
        )
     
@@ -2112,8 +1811,8 @@ NB: called from within a hook, careful with errors!
   ;; ----------
   (let* 
       (
-;;;        (l-ccm-string (vc-cmsyn-command-to-string "finduse" p-4-part-name))
-      (l-ccm-string (vc-cmsyn-command-to-string (format "finduse %s" p-4-part-name)))
+;;;        (l-ccm-string (vc-rational-synergy-command-to-string "finduse" p-4-part-name))
+      (l-ccm-string (vc-rational-synergy-command-to-string (format "finduse %s" p-4-part-name)))
        l-path l-rel-path l-rel-path-version l-project-path l-project l-projects-alist l-start
        )
     (if (string-match "@[^@]*@" l-ccm-string)
@@ -2138,7 +1837,7 @@ NB: called from within a hook, careful with errors!
 ;;; 			     (let* 
 ;;; 				 (
 ;;; 				  (l-4-part-name (format "%s:project:1" (car p-list)))
-;;; 				  (l-status (vc-cmsyn-command-to-string (format "%s attr -show status %s" vc-cmsyn-exe-name l-4-part-name)))
+;;; 				  (l-status (vc-rational-synergy-command-to-string (format "%s attr -show status %s" vc-cmsyn-exe-name l-4-part-name)))
 ;;; 				  )
 ;;; 			       (save-match-data ;; chop off the end \n
 ;;; 				 (string-match "\\([^\n]+\\)\n*" l-status)
@@ -2247,14 +1946,14 @@ NB: called from within a hook, careful with errors!
        (l-ccm-type	      (nth 2 l-list))
        (l-instance	      (nth 3 l-list))
        (l-filename	      (nth 0 l-list))
-;;;        (l-use		      (vc-cmsyn-command-to-string "finduse" p-4-part-name))
-       (l-use		      (vc-cmsyn-command-to-string (format "finduse %s" p-4-part-name)))
+;;;        (l-use		      (vc-rational-synergy-command-to-string "finduse" p-4-part-name))
+       (l-use		      (vc-rational-synergy-command-to-string (format "finduse %s" p-4-part-name)))
        l-project l-rp-bl-string l-bl-project l-file-1 l-result l-list
        )
     (if (not (string-match "@" l-use))
 	(setq l-result nil) ;; not used, or error-message, forget about it
       (setq l-project (car (split-string (nth 1 (split-string l-use "@")) "\n")))
-      (setq l-rp-bl-string (vc-cmsyn-command-to-string
+      (setq l-rp-bl-string (vc-rational-synergy-command-to-string
 ;;; 			    "rp" "-show" "bl" l-project ;; format <nr>) <projectname>\n
 			    (format "rp -show bl %s" l-project) ;; format <nr>) <projectname>\n
 			    ))
@@ -2262,7 +1961,7 @@ NB: called from within a hook, careful with errors!
 	  (setq l-result nil) ;; not the right output, forget about this? Message?
 	(setq l-bl-project (nth 1 (split-string l-rp-bl-string)))
 ;;;	l-bl-project l-filename l-ccm-type l-instance))
-	(setq l-file-1 (vc-cmsyn-command-to-string
+	(setq l-file-1 (vc-rational-synergy-command-to-string
 ;;; 		    "query" (format "\"is_member_of('%s') and name='%s' and type='%s' and instance='%s' \"" l-bl-project l-filename l-ccm-type l-instance) " -f" "\"%%objectname\""
 			(format "query \"is_member_of('%s') and name='%s' and type='%s' and instance='%s' \" -f \"%%objectname\""
 				l-bl-project l-filename l-ccm-type l-instance)
@@ -2326,7 +2025,7 @@ NB: called from within a hook, careful with errors!
  "Check if the file P-FILE is located in a CM Synergy workarea"
  (let* ( (l-file     (if p-absolute
 			 p-file
-		       (vc-cmsyn-unixify-path p-file))       )   ;; unixify
+		       (vc-rational-synergy-unixify-path p-file))       )   ;; unixify
 	 (l-path     (file-name-directory l-file)            )
 	 (l-expanded (expand-file-name "_ccmwaid.inf" l-path))
 	 (l-up       (expand-file-name ".." l-path)          )
@@ -2377,8 +2076,8 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
 	 (let* 
 	     (
 	      (l-file			(buffer-file-name))
-;;; 	      (l-object-name		(vc-cmsyn-command-to-string "ls" "-f" "\"%%objectname\"" (vc-cmsyn-platformity-path l-file)))
-	      (l-object-name		(vc-cmsyn-command-to-string (format "ls -f \"%%objectname\" %s" (vc-cmsyn-platformity-path l-file))))
+;;; 	      (l-object-name		(vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
+	      (l-object-name		(vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	      l-version
 	      )
 	   (if (not (string-match vc-cmsyn-object-name-regexp l-object-name))
@@ -2405,7 +2104,7 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
 ;;        l-state-info
 ;;        )
 ;;     (when (not l-state)
-;;       (setq l-status (vc-cmsyn-command-to-string (format "%s ls -f \"%%status\" %s" vc-cmsyn-exe-name (buffer-file-name))))
+;;       (setq l-status (vc-rational-synergy-command-to-string (format "%s ls -f \"%%status\" %s" vc-cmsyn-exe-name (buffer-file-name))))
 ;;       (setq l-state
 ;; 	    (cond
 ;; 	     ((not (member l-status vc-cmsyn-checked-out-status-list))
@@ -2418,8 +2117,8 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
 ;; 	      )
 ;; 	     )
 ;; 	    )
-;;       (setq l-state-info (vc-cmsyn-command-to-string (format "ccm diff %s " p-file)))
-;; ;;      (setq l-state (vc-cmsyn-command-to-string (format "%s diff %s %s" vc-cmsyn-exe-name p-file (format "%s%s%s" p-file vc-cmsyn-version-object-separator "1"))))
+;;       (setq l-state-info (vc-rational-synergy-command-to-string (format "ccm diff %s " p-file)))
+;; ;;      (setq l-state (vc-rational-synergy-command-to-string (format "%s diff %s %s" vc-cmsyn-exe-name p-file (format "%s%s%s" p-file vc-cmsyn-version-object-separator "1"))))
 ;;       (setq l-state
 ;; 	    (cond
 ;; 	     ((and (file-writable-p (p-file))
@@ -2450,7 +2149,7 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
 ;;  Methodology   : Partly copied from ccm-update-modeline, made asynchronous
 ;;  Author        : Realworld Systems (GR)."
 ;;  (interactive)
-;;  (vc-cmsyn-check-login)
+;;  (vc-rational-synergy-check-session)
 ;;  (when (buffer-file-name) ;; only if we are in a file there is version-information to display
 ;;    (let* ((l-filename (file-name-nondirectory (buffer-file-name)))
 ;;	   ;; ----------
@@ -2534,7 +2233,7 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
 ;;       )
 ;;      )
 ;;    )
-;;   (vc-cmsyn-check-logout)
+;;   (vc-rational-synergy-check-session-pause)
 ;;  )
 
 (provide 'vc-cmsyn)

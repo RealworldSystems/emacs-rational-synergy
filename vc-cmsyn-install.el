@@ -49,39 +49,7 @@
   Author        : Realworld Systems (GR)."
   )
 
-;; ----------
-;; USER Options, for ADMIN options see below
-;; ----------
-(defgroup vc-cmsyn-user nil
-  "User-Customization options for CM Synergy mode.
-  Date          : Apr/2003
-  Author        : Realworld Systems (GR)."
-  :tag "CM Synergy mode User options"
-  :group 'programming
-  :group 'tools
-  )
 
-(defcustom vc-cmsyn-auto-login-logout nil
-  "If t each Synergy command will be preceded by a login and will be succeeded by logout, freeing up licenses (default off)."
-  :tag "CM Synergy auto-login-logout"
-  :type 'boolean
-  :group 'vc-cmsyn-user)
-
-(defcustom vc-cmsyn-auto-login-data '("" "" "")
-  "user, pwd and synergy-database to use for auto-login"
-  :tag "CM Synergy auto-login-data"
-  :type '(list 
-	  (string :tag "CM Synergy user-name")
-	  (string :tag "CM Synergy pwd      ")
-	  (string :tag "CM Synergy database ")
-	  )
-  :group 'vc-cmsyn-user)
-
-(defcustom vc-cmsyn-auto-login-task ""
-  "task to use for auto-login"
-  :tag "CM Synergy auto-login-task"
-  :type '(string :tag "CM Synergy task id to use for auto-login")
-  :group 'vc-cmsyn-user)
 
 (defun vc-cmsyn-info ()
   "Shows info for IBM Rational Synergy"
@@ -169,12 +137,6 @@
 (defcustom vc-cmsyn-register-checks-in-p t
   "If this is non-nil registering a file into CM Synergy will check it in at the same time."
   :tag "Check a file in when registering?"
-  :type 'boolean
-  :group 'vc-cmsyn-user)
-
-(defcustom vc-cmsyn-use-developers-gui-p nil ;; giving problems at the moment, leave out
-  "If this is non-nil starting CM Synergy will start the developers GUI instead of the classic."
-  :tag "Start developers-GUI?"
   :type 'boolean
   :group 'vc-cmsyn-user)
 
@@ -343,11 +305,6 @@ Typically this will be organized within CM Synergy already so it goes automatica
   :type 'string
   :group 'vc-cmsyn-admin)
 
-(defcustom vc-cmsyn-exe-name "ccm"
-  "The CM Synergy executable name"
-  :tag "CM Synergy executable name"
-  :type 'string
-  :group 'vc-cmsyn-admin)
 
 (defcustom vc-cmsyn-developers-gui-exe-name "cmsynergy"
   "The CM Synergy Developers GUI executable name"

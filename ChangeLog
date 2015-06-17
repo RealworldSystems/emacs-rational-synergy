@@ -1,0 +1,50 @@
+2015-06-17    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-cmsyn-install.el (vc-cmsyn-use-developers-gui-p): Removed
+	There is no classic GUI anymore, so need to deal with only one
+	type of GUi
+
+2015-06-17    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-cmsyn.el (vc-cmsyn-sentinel-start-classic-gui): Obsolete
+
+2015-06-17    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-utilities.el: Moved utility
+	methods out of vc-cmsyn.el and moved them into
+	vc-rational-synergy-utilities.el, corrected a spelling
+	mistake.
+
+2015-06-17    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-command-to-string.el: Moved
+	vc-cmsyn-command-to-string to this file and modified
+	it to work:
+	 - Without "source" option, as the CCM command of
+	7.2.1 does not accept such
+	 - Using process-lines, as this prevents the creation
+	of a buffer
+
+2015-06-17    <sjoerd.van.leent@realworld-systems.com>
+
+	* ChangeLog: Created a change log file to list
+	changes performed and reasoning about why they
+	are performed.
+
+2015-06-11    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-about.el: Moved the function
+	procedures regarding the about menu entry out of
+	the vc-cmsyn.el file, to increase readability. Also
+	updated the function of the about display itself
+	to utilise message box functionality, which on a
+	GUI Emacs interface is more understandable.
+
+2015-06-11    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-constants.el: Moved a number
+	of constant definitions towards a new file, such
+	that they would not interfere with regular code, in
+	an attempt to enhance readability of the original
+	source files.
+

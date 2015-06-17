@@ -35,7 +35,9 @@
 
 ;;; Code:
 
-(defconst vc-rational-synergy-int-version-string
+;;;; Versioning.
+
+(defconst vc-rational-synergy-int-vexbrsion-string
   "0.9.norelease"
   "The version string of the current rational synergy integration module")
 
@@ -46,6 +48,24 @@
 (defconst vc-rational-synergy-int-author-string 
   "Sjoerd van Leent/Geert Ribbers/Henrik Joensson"
   "Author String of the IBM Rational Synergy module")
+
+;;;; Authentication.
+
+(defconst vc-rational-synergy-int-username-query-format
+  "Enter Rational Synergy user name"
+  "Input of username")
+
+(defconst vc-rational-synergy-int-host-query-format
+  "Enter Rational Synergy host name"
+  "Input of host")
+
+(defconst vc-rational-synergy-int-database-query-format
+  "Enter Rational Synergy database name"
+  "Input of database")
+
+(defconst vc-rational-synergy-int-password-query-format
+  "Enter Rational Synergy password"
+  "Input of password")
 
 
 (provide 'vc-rational-synergy-constants)
