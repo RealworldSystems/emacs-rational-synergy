@@ -1,4 +1,4 @@
-;;; vc-cmsyn.el --- IBM Rational Synergy integration for Emacs
+;;; vc-rational-synergy-base.el --- IBM Rational Synergy integration for Emacs
  
 ;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
 ;; Copyright (C) 2003 Realworld Systems
@@ -34,7 +34,11 @@
 
 (require 'vc-rational-synergy-command-to-string)
 (require 'vc-rational-synergy-utilities)
+(require 'vc-rational-synergy-authentication)
 (require 'vc-rational-synergy-modeline)
+
+(require 'vc-rational-synergy-administration-customization)
+(require 'vc-rational-synergy-user-customization)
 
 
 ;;;###autoload
@@ -61,17 +65,6 @@
        l-proc
        )
     (vc-cmsyn-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-file nil t)
-    ;;     (vc-cmsyn-report l-message)
-;;;;     (vc-cmsyn-show-buffer "Starting check out...")
-    ;;     (setq comint-output-filter-functions
-    ;;           (push 'shell-strip-ctrl-m
-    ;;                 comint-output-filter-functions))
-    ;;     (setq l-proc (start-process "ccm" (vc-cmsyn-buffer)
-    ;; 					      vc-cmsyn-exe-name "co" l-filename))
-    ;;     (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
-    ;; ;;     (message "!! Buffer co3: -%s-, l-filename: -%s-" (file-name-directory (buffer-file-name)) l-filename)
-    ;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-co-file)
-    ;; ;;     (set-process-filter l-proc 'vc-cmsyn-process-filter)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -121,16 +114,6 @@
        l-proc
        )
     (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-file nil t)
-;;    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" l-filename) 'vc-cmsyn-sentinel-ci-file)
-;;     (vc-cmsyn-report l-message)
-;; ;;     (vc-cmsyn-show-buffer "Undoing check out...")
-;;     (setq comint-output-filter-functions
-;;           (push 'shell-strip-ctrl-m
-;;                 comint-output-filter-functions))
-;;     (setq l-proc (start-process "ccm" (vc-cmsyn-buffer)
-;; 					      vc-cmsyn-exe-name "unuse -replace -delete" l-filename))
-;;     (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
-;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-ci-file)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -165,20 +148,14 @@
   Returns       : -"
   (interactive)
   (vc-rational-synergy-check-session)
-;;   (when vc-cmsyn-check-default-task-set-p (vc-cmsyn-check-task-set t))
-  (let* ((l-type	      (when vc-cmsyn-query-create-file-type (read-string "Type of the file: " "")))
-	 (l-version	      (when vc-cmsyn-query-create-file-version (read-string "Version of the file: " "")))
+  (let* ((l-type	      (when vc-rational-synergy-query-create-file-type (read-string "Type of the file: " "")))
+	 (l-version	      (when vc-rational-synergy-query-create-file-version (read-string "Version of the file: " "")))
 	 (l-filename	      (buffer-file-name))
-;;	 (l-filename	      (vc-rational-synergy-platformify-path (buffer-file-name)))
-;; 	 (l-filename	      (file-name-nondirectory (buffer-file-name)))
 	 (l-create-command    (if l-type (format "create -type %s %s" l-type (vc-rational-synergy-platformify-path l-filename)) (format "create %s" (vc-rational-synergy-platformify-path l-filename))))
 	 (l-attr-command      (when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-filename))))
 	 (l-message	      (format "Starting registration of %s..." l-filename))
 	 )
     (vc-cmsyn-run-command l-message l-create-command 'vc-cmsyn-sentinel-register-file nil (not p-dont-check-task))
-;;     (vc-cmsyn-report l-message)
-;; ;;     (vc-cmsyn-show-buffer)
-;;     (pop-to-buffer (vc-cmsyn-buffer))
     (when l-attr-command (vc-cmsyn-run-command "Setting version..." l-attr-command)))
   (vc-rational-synergy-check-session-pause)
   )
@@ -194,8 +171,8 @@
   (vc-rational-synergy-check-session)
   (let*
       (
-       (l-type			(or p-type (when vc-cmsyn-query-create-file-type (read-string "Type of the files in the Directory: " ""))))
-       (l-version		(when vc-cmsyn-query-create-file-version (read-string "Version of the Directory: " "")))
+       (l-type			(or p-type (when vc-rational-synergy-query-create-file-type (read-string "Type of the files in the Directory: " ""))))
+       (l-version		(when vc-rational-synergy-query-create-file-version (read-string "Version of the Directory: " "")))
        (l-dir			(or p-directory
 				    (if (equal major-mode 'dired-mode)
 					(if (listp dired-directory) (car dired-directory) dired-directory)
@@ -203,17 +180,15 @@
        (l-attr-command		(when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-dir))))
        (l-recursive-p		(or p-directory (y-or-n-p (format "Recursive Register %s?" l-dir))))
        (l-files			(delq nil (directory-files l-dir t "\\(^[^\\.]\\|^\\.[^.]\\)")))
-       ;;        (l-check-task-set	(not p-directory)) ;;when called recursively the check has been done already
        l-create-command l-string l-file l-ok?
        )
     ;; ----------
     ;; 1st this directory
     ;; ----------
     (mapcar (lambda (p-regexp)
-	    (when (string-match p-regexp l-dir) (error "Directory %s should not be registered in Synergy according to a filter defined in `vc-cmsyn-register-directory-and-files-filter'" l-dir))
-	    ) vc-cmsyn-register-directory-and-files-filter)
+	    (when (string-match p-regexp l-dir) (error "Directory %s should not be registered in Synergy according to a filter defined in `vc-rational-synergy-register-directory-and-files-filter'" l-dir))
+	    ) vc-rational-synergy-register-directory-and-files-filter)
     (message "Registering Directory: -%s-..." l-dir)
-;;;     (setq l-string (vc-rational-synergy-command-to-string "create" "-type" "dir" (vc-rational-synergy-platformify-path l-dir))) ;; have to do this sync, because of multipe actions
     (setq l-create-command	(format "create -type dir %s" (vc-rational-synergy-platformify-path l-dir)))
     (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
     (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
@@ -226,7 +201,7 @@
       (mapcar (lambda (p-regexp)
 		(when (string-match p-regexp i-file)
 		  (setq l-ok? nil))
-		) vc-cmsyn-register-directory-and-files-filter)
+		) vc-rational-synergy-register-directory-and-files-filter)
       (when l-ok?
 	(if (file-directory-p i-file)
 	    (when l-recursive-p
@@ -234,9 +209,6 @@
 	      )
 	  (setq l-file (vc-rational-synergy-platformify-path i-file))
 	  (message "Registering: %s" l-file)
-;;; 	  (setq l-string (if l-type ;; type determined from extension
-;;; 			     (vc-rational-synergy-command-to-string "create" "-type" l-type l-file)
-;;; 			   (vc-rational-synergy-command-to-string "create" l-file)))
 	  (setq l-create-command
 		(if l-type (format "create -type %s %s" l-type l-file)
 		  (format "create %s" l-file))) ;; type determined from extension
@@ -245,15 +217,13 @@
 	  (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
 	  (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Registering %s, see Synergy output-buffer for details" l-dir))
 	  (when l-version
-;;; 	    (setq l-string (vc-rational-synergy-command-to-string "attr" "-modify" "version" "-value" l-version l-file))
 	    (setq l-attr-command (format "attr -modify version -value %s %s" l-version l-file))
 	    (setq l-string (vc-rational-synergy-command-to-string l-attr-command))
 	    (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
 	    (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Setting version %s at %s" l-version l-file))
 	    )
-	  (when vc-cmsyn-register-checks-in-p
+	  (when vc-rational-synergy-register-checks-in-p
 	    (message "Checking in: %s" l-file)
-;;; 	    (setq l-string (vc-rational-synergy-command-to-string "ci" "-c" "\"Checked in new file after registering\"" l-file))
 	    (setq l-string (vc-rational-synergy-command-to-string (format "ci -c \"Checked in new file after registering\" %s" l-file)))
 	    )
 	  )
@@ -264,30 +234,6 @@
     )
   (vc-rational-synergy-check-session-pause)
   )
-
-;;(defun vc-cmsyn-create-directory ()
-;;  "Creates the current directory in CM Synergy, *with* files in it, evt. recursive.
-;;  Author        : Realworld Systems (GR).
-;;  Date          : Apr/2003
-;;  Parameters    : 
-;;  Returns       : "
-;;  (interactive)
-;;;  (vc-rational-synergy-check-session)
-;;;;   (when vc-cmsyn-check-default-task-set-p (vc-cmsyn-check-task-set t))
-;;  (let* ((l-version	      (when vc-cmsyn-query-create-file-version (read-string "Version of the Directory: " "")))
-;;	 (l-filename	      (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
-;;	 (l-create-command    (format "create -type dir %s" l-filename))
-;;	 (l-attr-command      (when l-version (format "attr -modify version -value %s %s" l-version l-filename)))
-;;	 (l-message	      (format "Starting registration of %s..." l-filename))
-;;	 (l-recursive-p)
-;;	 )
-;;    (vc-cmsyn-run-command l-message l-create-command nil nil t)
-;;;;     (vc-cmsyn-report l-message)
-;;;; ;;     (vc-cmsyn-show-buffer)
-;;;;     (pop-to-buffer (vc-cmsyn-buffer))
-;;    (when l-attr-command (vc-cmsyn-run-command "Setting version..." l-attr-command)))
-;;;   (vc-rational-synergy-check-session-pause)
-;;; )
 
 ;;;###autoload
 (defun vc-cmsyn-ci-file (&optional p-comment-string p-dont-check-task)
@@ -317,17 +263,7 @@
 		      (format "ci -c \"%s\" %s" l-comment (vc-rational-synergy-platformify-path l-filename))))
        l-proc
        )
-;;     (message " !! Running ci command: -%s-" l-command)
     (vc-cmsyn-run-command l-message l-command  'vc-cmsyn-sentinel-ci-file nil (not p-dont-check-task))
-;;     (vc-cmsyn-report l-message)
-;; ;;     (vc-cmsyn-show-buffer "Starting check in...")
-;;     (setq comint-output-filter-functions
-;;           (push 'shell-strip-ctrl-m
-;;                 comint-output-filter-functions))
-;;     (setq l-proc (start-process "ccm" (vc-cmsyn-buffer)
-;;                                  vc-cmsyn-exe-name "ci -nc" l-filename))
-;;     (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
-;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-ci-file)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -451,12 +387,6 @@
        l-proc
        )
     (vc-cmsyn-run-command l-message (format "task -checkin default -comment \"%s\"" l-comment) 'vc-cmsyn-sentinel-ci-task nil t)
-;;     (vc-cmsyn-report l-message)
-;; ;;     (vc-cmsyn-show-buffer "Starting check in Task...")
-;;     (setq l-proc (start-process "ccm" (vc-cmsyn-buffer)
-;; 					      vc-cmsyn-exe-name "task" "-checkin" "default" l-filename))
-;;     (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
-;;     (set-process-sentinel l-proc 'vc-cmsyn-sentinel-ci-task)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -471,7 +401,6 @@
   Author        : Realworld Systems (GR)."
   (interactive)
   (vc-rational-synergy-check-session)
-;;   (vc-cmsyn-show-buffer)
   (vc-cmsyn-run-command "Retrieving Current Default Task" "task -default")
   (vc-rational-synergy-check-session-pause)
   )
@@ -514,7 +443,6 @@
        (l-dummy		      (progn (message "Retrieving files for task %s..." l-string) l-string))
        (l-list		      (split-string l-string ":"))
        (l-task		      (car l-list)) ;; the nr.
-;;;        (l-objects-string      (vc-rational-synergy-command-to-string "task" "-show" "objects" "-f" "\"%%objectname@:@%%status\"" l-task))
        (l-objects-string      (vc-rational-synergy-command-to-string (format "task -show objects -f \"%%objectname@:@%%status\" %s" l-task)))
        (l-lines		      (split-string l-objects-string "\n"))
        (l-objects-list	      (delq nil
@@ -526,15 +454,12 @@
 						     (l-parts	      (split-string l-filename "@:@"))
 						     (l-object-name   (car l-parts))
 						     (l-name-parts    (split-string l-object-name ":"))
-						     (l-objectversion (split-string (car l-name-parts) vc-cmsyn-version-object-separator))
+						     (l-objectversion (split-string (car l-name-parts) vc-rational-synergy-version-object-separator))
 						     (l-file-leaf     (car l-objectversion))
 						     (l-version	      (nth 1 l-objectversion))
 						     (l-extension     (file-name-extension l-file-leaf))
-;;; 						     (l-type	      (when l-extension (intern l-extension)))
 						     (l-type-data     (when (not (equal l-extension "dir")) (vc-cmsyn-patch-type-data-for-file-type l-extension)))
-;;; 						     (l-type-data     (when (not (equal l-type "dir")) (assoc l-type vc-cmsyn-patch-types)))
 						     (l-object-query  (when l-type-data (format "\"name= '%s'  and version= '%s' and type='%s' and instance='%s' and is_hist_leaf()\"" l-file-leaf l-version (nth 1 l-name-parts) (nth 2 l-name-parts))))
-;;; 						     (l-latest-test   (when l-type-data (vc-rational-synergy-command-to-string "query" l-object-query)))
 						     (l-latest-test   (when l-type-data (vc-rational-synergy-command-to-string (format "query %s" l-object-query))))
 						     (l-latest-p      (when l-type-data (not (zerop (length l-latest-test)))))
 						     )
@@ -549,7 +474,6 @@
        l-output-string l-load-function l-filename l-path l-list l-project
        )
     (dolist (i-object-name l-objects-list)
-;;       (message "!! Object: -%s-" i-object-name)
       (setq l-list (vc-cmsyn-object-name-2-path i-object-name nil t l-project))
       (setq l-path (nth 0 l-list))
       (when (not l-project) (setq l-project (nth 1 l-list)))
@@ -568,7 +492,6 @@
   Returns       : string, nil or generates error"
   (let* 
       (
-;;;        (l-string	      (vc-rational-synergy-command-to-string "task" "-default"))
        (l-string	      (vc-rational-synergy-command-to-string "task -default"))
        (l-list		      (split-string l-string ":"))
        (l-error		      (when (and p-error-p
@@ -600,7 +523,6 @@
   (interactive)
   (vc-rational-synergy-check-session)
   (vc-cmsyn-report "Starting create Task...")
-;;   (vc-cmsyn-show-buffer "Starting create Task...")
   (let*
       (
        (l-proc (start-process vc-cmsyn-exe-name (vc-cmsyn-buffer)
@@ -608,37 +530,6 @@
     )
   (vc-rational-synergy-check-session-pause)
   )
-
-;;;###autoload
-(defun vc-cmsyn-set-ccmAddr ()
-  "Read ccmAddr from the user"
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let*
-      (
-       (l-ccm-addr (read-string "Enter CCM_ADDR (like <machine-name>:<number><ip-address-Synergy-server>: " (or (getenv "CCM_ADDR") "")))
-       )
-    (setenv "CCM_ADDR" l-ccm-addr))
-  (vc-rational-synergy-check-session-pause)
-  )
-
-;;(defun vc-cmsyn-create ()
-;;  "Creates the current file in CM Synergy, asks the user for a type and version"
-;;  (interactive)
-;;  (vc-rational-synergy-check-session)
-;;  (let* ((type (read-string "Type of the file: " ""))
-;;	 (version (read-string "Version of the file: " ""))
-;;	 (filename (file-name-directory (buffer-file-name)))
-;;	 (create-command (format "create -type %s %s"
-;;				 type filename))
-;;	 (attr-command (format "attr -modify version -value %s %s"
-;;			       version filename)))
-;;
-;;    (vc-cmsyn-show-buffer)
-;;    (vc-cmsyn-run-command "Creating file..." create-command)
-;;    (vc-cmsyn-run-command "Setting version..." attr-command))
-;;   (vc-rational-synergy-check-session-pause)
-;;)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utility Functions
@@ -661,7 +552,7 @@
   ;; ----------
   ;; check task set, if applicable
   ;; ----------
-  (and vc-cmsyn-check-default-task-set-p p-check-task-set-p (vc-cmsyn-check-task-set t))
+  (and vc-rational-synergy-check-default-task-set-p p-check-task-set-p (vc-cmsyn-check-task-set t))
   (let* 
       ((l-sentinel (or p-sentinel 'vc-cmsyn-sentinel))
        (l-current-buffer (current-buffer))
@@ -676,8 +567,6 @@
     (setq comint-output-filter-functions
 	  (push 'shell-strip-ctrl-m
 		comint-output-filter-functions))
-;;;     (message "!! env now: -%s-" (getenv "ccm_addr"))
-;;;     (message "!! task-string: -%s-, p-command: -%s-" (vc-rational-synergy-command-to-string "ccm task -default") p-command)
     (setq l-proc (apply 'start-process vc-cmsyn-exe-name l-proc-buffer
 			vc-cmsyn-exe-name (vc-cmsyn-split-string-carefully p-command))) ;; the arguments need to be a list since emacs20
     (vc-cmsyn-map-proc-and-buffer l-proc l-current-buffer)
@@ -715,32 +604,6 @@
     )
   )
 
-;; ----------
-;; VC version of run-command
-;; ----------
-;;(defun vc-cmsyn-run-command (p-info p-command &optional p-sentinel p-filter p-check-task-set-p)
-;;  "Call the CM Synergy executable with the parameter-line P-COMMAND, supplying info with P-INFO.
-;;  Date          : Apr/2003
-;;  Parameters    : P-INFO: Message to report
-;;                  P-COMMAND: part of command-line after the name of the executable
-;;  Returns       : 
-;;  Author        : Realworld Systems (GR)."
-;;  ;; ----------
-;;  ;; check task set, if applicable
-;;  ;; ----------
-;;  (and vc-cmsyn-check-default-task-set-p p-check-task-set-p (vc-cmsyn-check-task-set t))
-;;  (let* 
-;;      ((l-sentinel (or p-sentinel 'vc-cmsyn-sentinel))
-;;       l-proc)
-;;    (vc-cmsyn-report (format "\n%s\n" p-info))
-;;    (setq comint-output-filter-functions
-;;	  (push 'shell-strip-ctrl-m
-;;		comint-output-filter-functions))
-;;    (message "!! Running command: -%s-, current-dir: -%s-" p-command default-directory)
-;;    (vc-do-command (vc-cmsyn-buffer) 'async "ccm" (buffer-file-name) (split-string p-command))
-;;    )
-;;  )
-
 (defun vc-cmsyn-process-filter (p-proc p-string)
   "Insert the output string in process-buffer, at the end.
   Author        : Realworld Systems (GR)
@@ -770,41 +633,8 @@
     (let* 
 	(
 	 (l-current-frame	(selected-frame))
-	 (l-buffer		(get-buffer-create vc-cmsyn-buffer-name))
+	 (l-buffer		(get-buffer-create vc-rational-synergy-buffer-name))
 	 )
-      ;; (if (and vc-cmsyn-buffer-frame
-      ;; 	       (frame-live-p vc-cmsyn-buffer-frame))
-      ;; 	  ;; ----------
-      ;; 	  ;; check if this still displays the right buffer (user may have
-      ;; 	  ;; deleted the buffer)
-      ;; 	  ;; ----------
-      ;; 	  (progn
-      ;; 	    (when (not (equal l-buffer (window-buffer (frame-first-window vc-cmsyn-buffer-frame))))
-      ;; 	      (raise-frame vc-cmsyn-buffer-frame)
-      ;; 	      (set-window-dedicated-p (current-buffer) nil)
-      ;; 	      (switch-to-buffer l-buffer)
-      ;; 	      (set-window-dedicated-p (get-buffer-window l-buffer) t)
-      ;; 	      (when p-stay-in-current-frame (raise-frame l-current-frame)) 
-      ;; 	      ))
-      ;; 	;; ----------
-      ;; 	;; no (live) frame present, make 1
-      ;; 	;; ----------
-      ;; 	(set-buffer l-buffer)
-      ;; 	(select-frame-set-input-focus (make-frame
-      ;; 			     `((width          . ,vc-cmsyn-buffer-frame-width)
-      ;; 			       (height         . ,vc-cmsyn-buffer-frame-height)
-      ;; 			       (border-width   . 0)
-      ;; 			       (menu-bar-lines . 0)
-      ;; 			       (tool-bar-lines . 0)
-      ;; 			       (unsplittable   . t)
-      ;; 			       (minibuffer     . nil)
-      ;; 			       (modeline       . nil)
-      ;; 			       (title	       . "CM Synergy Output")
-      ;; 			       )))
-      ;; 	(setq vc-cmsyn-buffer-frame (selected-frame))
-      ;; 	(set-window-dedicated-p (get-buffer-window l-buffer) t)
-      ;; 	(when p-stay-in-current-frame (raise-frame l-current-frame)) 
-      ;; 	)
       l-buffer
       )
     )
@@ -890,7 +720,7 @@
     ;; ----------
     (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
     (vc-cmsyn-report (format "CM Synergy Command %s" p-what))
-    (when (and vc-cmsyn-command-end-jump-to-output-buffer-p
+    (when (and vc-rational-synergy-command-end-jump-to-output-buffer-p
 	       (not p-dont-popup-process-buffer)
 	       )
       (vc-cmsyn-show-output-buffer)
@@ -942,7 +772,7 @@
       (save-excursion
 	(set-buffer l-output-buffer)
 	(when (re-search-backward "Starting check out of" nil t)
-	  (when (re-search-forward (format "%s.*$" vc-cmsyn-parallel-versions-string ) nil t)
+	  (when (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
 	    (x-popup-dialog t (list (match-string 0) (cons "Ok" t)))
 	    )
 	  )
@@ -951,7 +781,6 @@
     (set-buffer l-buffer)
     (when (string-match "finished" p-what) ;; carefull with blanks and newlines in p_what!
       (revert-buffer t t) ;; get the version that was checked out from CM Synergy
-;;;      (find-file (buffer-name l-buffer)) ;; get the version that was checked out from CM Synergy
       ;; ----------
       ;; evt. reset the directory-status immediately again: other files in
       ;; the directory may be checked out for other tasks, thus it's better
@@ -961,7 +790,7 @@
       ;; message "Object '...' is already in the 'released' state.", no
       ;; problem so we don't test for being checked out 1st!
       ;; ----------
-      (when vc-cmsyn-auto-check-in-directory-p
+      (when vc-rational-synergy-auto-check-in-directory-p
 	(let* 
 	    (
 	     (l-filename (vc-rational-synergy-platformify-path (buffer-file-name)))
@@ -977,7 +806,6 @@
 	  )
 	)
       )
-;;;     (vc-cmsyn-check-status-buffer) ==> via update-mode-line in ( vc-cmsyn-sentinel)
     (vc-cmsyn-sentinel p-process p-what) ;; cleanup, evt. remove C-m's
     (message "Ready checking out file %s" (buffer-file-name l-buffer))
     )
@@ -1002,9 +830,9 @@
     ;; ----------
     ;; And ci this file now that it's registered
     ;; ----------
-    (if vc-cmsyn-register-checks-in-p
+    (if vc-rational-synergy-register-checks-in-p
 	(vc-cmsyn-ci-file "1st Checkin after creation") ;; this also pops to output-buffer and checks status buffer
-;;       (vc-cmsyn-check-status-buffer) ==> via update-mode-line in (vc-cmsyn-sentinel)
+      ;;       (vc-cmsyn-check-status-buffer) ==> via update-mode-line in (vc-cmsyn-sentinel)
       (vc-cmsyn-sentinel p-process p-what) ;; cleanup, evt. remove C-m's
       (message "%s is registered, but not checked in yet!" (buffer-file-name))
       )
@@ -1034,7 +862,7 @@
       (set-buffer l-output-buffer)
       (goto-char (point-max))
       (while (re-search-backward "Starting check out " vc-cmsyn-process-start-mark t))
-      (while (re-search-forward (format "%s.*$" vc-cmsyn-parallel-versions-string ) nil t)
+      (while (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
 	(setq l-string (format "%s; %s" l-string (match-string 0)))
 	)
       (when (> (length l-string) 0) (x-popup-dialog t (list l-string (cons "Ok" t))))
@@ -1071,14 +899,13 @@
       (set-buffer l-output-buffer)
       (goto-char (point-max))
       (when (re-search-backward "Starting check in of" vc-cmsyn-process-start-mark t)
-	(when (re-search-forward (format "%s.*$" vc-cmsyn-parallel-versions-string ) nil t)
+	(when (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
 	  (x-popup-dialog t (list (match-string 0) (cons "Ok" t)))
 	  )
 	)
       )
     (set-buffer l-buffer)
     (revert-buffer t t)
-;;     (vc-cmsyn-check-status-buffer)
     (vc-cmsyn-sentinel p-process p-what)
     (message "Ready checking in file %s" (buffer-file-name l-buffer))
     )
@@ -1125,7 +952,7 @@
       (set-buffer l-output-buffer)
       (goto-char (point-max))
       (while (re-search-backward "Starting check in " vc-cmsyn-process-start-mark t))
-      (while (re-search-forward (format "%s.*$" vc-cmsyn-parallel-versions-string ) nil t)
+      (while (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
 	(setq l-string (format "%s; %s" l-string (match-string 0)))
 	)
       (when (> (length l-string) 0) (x-popup-dialog t (list l-string (cons "Ok" t))))
@@ -1138,7 +965,6 @@
       )
     (vc-cmsyn-check-status-buffers)
     (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
-;;     (vc-cmsyn-sentinel p-process p-what) ;; cleanup, evt. remove C-m's
     (message "Ready checking in directory")
     )
   )
@@ -1175,9 +1001,7 @@
 	  )
 	)
       )
-;;     (vc-cmsyn-check-status-buffers)
     (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
-;;     (vc-cmsyn-sentinel p-process p-what) ;; cleanup, evt. remove C-m's
     (message "Ready undoing check out of directory")
     )
   )
@@ -1203,7 +1027,7 @@
       (set-buffer l-output-buffer)
       (goto-char (point-max))
       (while (re-search-backward "Starting check in " vc-cmsyn-process-start-mark t))
-      (while (re-search-forward (format "%s.*$" vc-cmsyn-parallel-versions-string ) nil t)
+      (while (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
 	(setq l-string (format "%s; %s" l-string (match-string 0)))
 	)
       (when (> (length l-string) 0) (x-popup-dialog t (list l-string (cons "Ok" t))))
@@ -1219,7 +1043,6 @@
     ;; ----------
     (vc-cmsyn-check-status-buffers)
     (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
-;;   (vc-cmsyn-sentinel p-process p-what)
     (message "Ready checking in task")
     )
   )
@@ -1293,7 +1116,6 @@
      ((and (not (file-writable-p (buffer-file-name))) (not buffer-read-only))
       (toggle-read-only))
      ))
-;;;   (vc-cmsyn-update-modeline) ;; update-mode-line calls this one!
   )
 
 (defun vc-cmsyn-dos2unix ()
@@ -1341,13 +1163,8 @@
   (message "  !! vc-cmsyn-select-task-cli2")
   (let* 
       (
-;;;        (l-status-string (vc-rational-synergy-command-to-string "status"))
-;;;        (a (message "  !! status-string+ -%s-" l-status-string))
       (l-status-string (vc-rational-synergy-command-to-string "status"))
        (l-user (when (string-match "^Sessions for user[ \t]+\\([^:]+\\):" l-status-string) (match-string 1 l-status-string)))
-;;;        (b (message "  !! user: -%s-" l-user))
-;;;        (l-task-list-string (when l-user (vc-rational-synergy-command-to-string "query" (format "\"status='task_assigned' and resolver='%s'\"" l-user) "-f" "\"%%task_number:%%task_description:%%task_synopsis\"" )))
-;;;        (c (message "  !! stasklist: -%s-" l-task-list-string))
        (l-task-list-string (when l-user (vc-rational-synergy-command-to-string (format "query \"status='task_assigned' and resolver='%s'\" -f \"%%task_number:%%task_description:%%task_synopsis\"" l-user))))
        (l-task-list (mapcar (lambda (p-entry)
 			      (let* 
@@ -1366,7 +1183,6 @@
     (message "  !! vc-cmsyn-select-task-cli 3")
     (if (<= (length l-task) 0)
 	(message-box "Task not set!")
-;;;       (vc-rational-synergy-command-to-string "task" "-default" l-task)
      (vc-rational-synergy-command-to-string (format "task -default %s" l-task))
       (message-box "Task set to %s!" l-task)
       )
@@ -1382,12 +1198,8 @@
   Returns       : -"
   (interactive)
   (vc-rational-synergy-check-session)
-  ;;   (vc-cmsyn-show-buffer "Calling select Task GUI...")
   (vc-cmsyn-run-command "Calling select Task GUI..." "task -default -g" )
-  ;;  (let* ((proc (start-process "ccm" (vc-cmsyn-buffer)
-  ;;                                           vc-cmsyn-exe-name "task" "-default" "-g")))
-  ;;    )
-  (when vc-cmsyn-iconify-frame-when-ccm-gui (iconify-frame))
+  (when vc-rational-synergy-iconify-frame-when-ccm-gui (iconify-frame))
   (vc-rational-synergy-check-session-pause)
   )
 
@@ -1400,7 +1212,6 @@
   (message "Checking ccm task...")
   (let* 
       (
-;;;        (l-string (vc-rational-synergy-command-to-string "task" "-default"))
       (l-string (vc-rational-synergy-command-to-string "task -default" ))
        )
     (if (string-match "The default task is not set\\." l-string)
@@ -1422,28 +1233,15 @@
 (define-key vc-cmsyn-mode-map (kbd "C-c C-m o") 'vc-cmsyn-co-file)
 (define-key vc-cmsyn-mode-map (kbd "C-c C-m u") 'vc-cmsyn-undo-co-file)
 (define-key vc-cmsyn-mode-map (kbd "C-c C-m i") 'vc-cmsyn-ci-file)
-;; (define-key global-map (kbd "C-c C-m d") 'vc-cmsyn-ci-task)
 (define-key vc-cmsyn-mode-map (kbd "C-c C-m h") 'vc-cmsyn-history-file-graphics)
 (define-key global-map (kbd "C-c C-m d") 'vc-cmsyn-show-default-task)
 (define-key global-map (kbd "C-c C-m t") 'vc-cmsyn-ci-task)
-;; (define-key global-map (kbd "C-c C-m t") 'vc-cmsyn-create-task)
 (define-key global-map (kbd "C-c C-m s") 'vc-cmsyn-select-task)
 (define-key global-map (kbd "C-c C-m p") 'vc-cmsyn-properties)
 (define-key global-map (kbd "C-c C-m a") 'vc-cmsyn-about)
 (define-key global-map (kbd "C-c C-m l") 'vc-rational-synergy-login) ;; login
 (define-key vc-cmsyn-mode-map (kbd "C-c C-m r") 'vc-cmsyn-register-file) ;; register
 
-					; Minor Mode
-;; (defvar vc-cmsyn-mode nil
-;;   "Minor mode for editing CM Synergy controlled files")
-
-;; (defun vc-cmsyn-mode (&optional arg)
-;;   "Minor mode for editing CM Synergy controlled files"
-;;   (interactive)
-;;   (setq vc-cmsyn-mode
-;; 	(if (null arg) (not vc-cmsyn-mode)
-;; 	  (> (prefix-numeric-value arg) 0)))
-;;   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1489,7 +1287,6 @@ NB: called from within a hook, careful with errors!
   (vc-rational-synergy-check-session)
   (let* 
       (
-;;;        (l-string (vc-rational-synergy-command-to-string "status"))
       (l-string (vc-rational-synergy-command-to-string "status"))
        )
     (save-match-data
@@ -1501,41 +1298,9 @@ NB: called from within a hook, careful with errors!
   (vc-rational-synergy-check-session-pause)
   )
 
-;; ----------
-;; Function below not used at the moment!
-;; ----------
-;;; (defun vc-cmsyn-select-project ()
-;;;   "Let user select a project from a list of projects.
-;;;   Author        : Realworld Systems (GR)
-;;;   Date          : Apr/2003
-;;;   Parameters    : 
-;;;   Returns       : string: <project-name>:%version:<release>:<owner>"
-;;;   ;; ----------
-;;;   ;; let user select a project
-;;;   ;; ----------
-;;;   (save-match-data
-;;;     (let* 
-;;; 	(
-;;; 	 (l-string (vc-rational-synergy-command-to-string "-p" "-f" "\"%project:%version:%release:owner\""))
-;;; ;;;	 (l-string (vc-rational-synergy-command-to-string (format "%s -p -f \"%project:%version:%release:owner" vc-cmsyn-exe-name)))
-;;; 	 l-projects
-;;; 	 )
-;;;       (when (not (string-match "^[ \t]*[0-9]+\)[ \t]*\\(.*\\)$" l-string)) (error "No projects found!"))
-;;;       (setq l-projects (delq nil
-;;; 			     (mapcar
-;;; 			      (lambda (p-line)
-;;; 				(when (string-match "^[ \t]*[0-9]+\)[ \t]*\\(.*\\)$" p-line)
-;;; 				  (match-string 1 p-line)
-;;; 				  )
-;;; 				)
-;;; 			      (split-string l-string "\n"))))
-;;;       (completing-read  "Select a Project [tab to complete]: " l-projects)
-;;;       )
-;;;     )
-;;;   )
 
 (defvar vc-cmsyn-object-name-regexp
-  (format "[^%s]+%s\\([^:]+\\):[^:]+:[^:]+" vc-cmsyn-version-object-separator vc-cmsyn-version-object-separator)
+  (format "[^%s]+%s\\([^:]+\\):[^:]+:[^:]+" vc-rational-synergy-version-object-separator vc-rational-synergy-version-object-separator)
   "*Regexp to match an object-name of CM Synergy.
   Date          : Apr/2003
   Author        : Realworld Systems (GR)."
@@ -1543,7 +1308,7 @@ NB: called from within a hook, careful with errors!
 
 (defvar vc-cmsyn-object-name-list-output-regexp
   (format "^[0-9]+\)[ \t]+%s+" vc-cmsyn-object-name-regexp)
-;;   (format "^[0-9]+\)[ \t]+[^%s]+%s\\([^:]+\\):[^:]+:[^:]+" vc-cmsyn-version-object-separator vc-cmsyn-version-object-separator)
+;;   (format "^[0-9]+\)[ \t]+[^%s]+%s\\([^:]+\\):[^:]+:[^:]+" vc-rational-synergy-version-object-separator vc-rational-synergy-version-object-separator)
   "*Regexp to match output from ccm that should be a list with objectnames.
   Date          : Apr/2003
   Author        : Realworld Systems (GR)."
@@ -1559,7 +1324,7 @@ NB: called from within a hook, careful with errors!
 (defvar vc-cmsyn-file-created-output-regexp
   "[Mm]ember[ \t]*\\(.*\\)[ \t]*added to project[ \t]+\\([^ \t\n]+\\)[ \t]*$"
   "*Regexp to match correct file-creation output from CM Synergy.
-  subexp 1 is fileleafname<`vc-cmsyn-version-object-separator'>version
+  subexp 1 is fileleafname<`vc-rational-synergy-version-object-separator'>version
   subexp 2 is project-name
   Date          : May/2003
   Author        : Realworld Systems (GR)."
@@ -1568,7 +1333,7 @@ NB: called from within a hook, careful with errors!
 (defvar vc-cmsyn-file-ci-output-regexp
   "Checked in[ \t]*'\\([^']+\\)'[ \t]*to[ \t]*'\\([^']+\\)'"
   "*Regexp to match correct file-ci output from CM Synergy.
-  subexp 1 is fileleafname<`vc-cmsyn-version-object-separator'>version
+  subexp 1 is fileleafname<`vc-rational-synergy-version-object-separator'>version
   subexp 2 is new status
   Date          : May/2003
   Author        : Realworld Systems (GR)."
@@ -1597,7 +1362,6 @@ NB: called from within a hook, careful with errors!
 	 (l-file          (buffer-file-name))
 	 (l-v1            (read-string "Older version: "))
 	 (l-v2            (read-string "Newer version: "))
-;;; 	 (l-object-name   (vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
 	 (l-object-name   (vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	 l-low-buffer l-high-buffer l-string1 l-string2 l-file1 l-file2
 	 )
@@ -1606,11 +1370,9 @@ NB: called from within a hook, careful with errors!
 	(save-match-data (when (string-match "\\(.*\\)\n$" l-object-name) (setq l-object-name (match-string 1 l-object-name))))
 	(setq l-file1 (replace-match l-v1 nil nil l-object-name 1))
 	(setq l-file2 (replace-match l-v2 nil nil l-object-name 1))
-;;; 	(setq l-string1 (vc-rational-synergy-command-to-string "cat" l-file1))
 	(setq l-string1 (vc-rational-synergy-command-to-string (format "cat %s" l-file1)))
 	(when (string-match vc-cmsyn-warning-error-output-regexp l-string1)
 	  (error (format "CM Synergy Error: %s" l-string1)))
-;;; 	(setq l-string2 (vc-rational-synergy-command-to-string "cat" l-file2))
 	(setq l-string2 (vc-rational-synergy-command-to-string (format "cat %s" l-file2)))
 	(when (string-match vc-cmsyn-warning-error-output-regexp l-string2)
 	  (error (format "CM Synergy Error: %s" l-string2)))
@@ -1661,7 +1423,6 @@ NB: called from within a hook, careful with errors!
 	(
 	 (l-file          (buffer-file-name))
 	 (l-v1            (read-string "Other version: "))
-;;; 	 (l-object-name   (vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
 	 (l-object-name   (vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	 (l-high-buffer    (current-buffer))
 	 l-low-buffer l-string1 l-string2 l-file1 l-file2
@@ -1670,7 +1431,6 @@ NB: called from within a hook, careful with errors!
 	  (error "Couldnt retrieve the right file-information from CMSynergy: %s" l-object-name)
 	(save-match-data (when (string-match "\\(.*\\)\n$" l-object-name) (setq l-object-name (match-string 1 l-object-name))))
 	(setq l-file1 (replace-match l-v1 nil nil l-object-name 1))
-;;; 	(setq l-string1 (vc-rational-synergy-command-to-string "cat" l-file1))
 	(setq l-string1 (vc-rational-synergy-command-to-string (format "cat %s" l-file1)))
 	(when (string-match vc-cmsyn-warning-error-output-regexp l-string1)
 	  (error (format "CM Synergy Error: %s" l-string1)))
@@ -1709,7 +1469,6 @@ NB: called from within a hook, careful with errors!
     (let* 
 	(
 	 (l-file          (buffer-file-name))
-;;; 	 (l-object-name   (vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
 	 (l-object-name   (vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	 (l-high-buffer   (current-buffer))
 	 l-parent-object-name l-low-buffer l-parent-object-name-string l-parent-object-name l-string1 l-lines
@@ -1725,7 +1484,6 @@ NB: called from within a hook, careful with errors!
 	     (setq l-parent-object-name (completing-read "More than 1 ancestor, choose which 1 to compare [tab to complete]: " l-parent-object-name))
 	     )
 	    )
-;;;       (setq l-string1 (vc-rational-synergy-command-to-string "cat" l-parent-object-name))
      (setq l-string1 (vc-rational-synergy-command-to-string (format "cat %s" l-parent-object-name)))
       (when (string-match vc-cmsyn-warning-error-output-regexp l-string1)
 	      (error (format "CM Synergy Error: %s" l-string1)))
@@ -1754,7 +1512,6 @@ NB: called from within a hook, careful with errors!
   Returns       : String or list with strings (if more than 1 ancessor)"
   (let* 
       (
-;;;        (l-parent-object-name-string (vc-rational-synergy-command-to-string "query" (format "\"is_predecessor_of ('%s')\"" p-4-part-name) "-f" "\"%%objectname\""))
       (l-parent-object-name-string (vc-rational-synergy-command-to-string (format "query \"is_predecessor_of ('%s')\" -f \"%%objectname\"" p-4-part-name)))
        (l-lines (split-string l-parent-object-name-string "\n"))
        )
@@ -1778,8 +1535,6 @@ NB: called from within a hook, careful with errors!
   Returns       : path or nil"
   (let* 
       (
-;;        (l-project-name	 (save-match-data (string-match (format "^\\([^%s]+\\)%s" vc-cmsyn-version-object-separator vc-cmsyn-version-object-separator) p-project-name-version) (match-string 1 p-project-name-version)))
-;;;        (l-wa-string	 (vc-rational-synergy-command-to-string "attr" "-show" "wa_path" "-project" p-project-name-version)) ;; workarea output
       (l-wa-string	 (vc-rational-synergy-command-to-string (format "attr -show wa_path -project %s" p-project-name-version))) ;; workarea output
        (l-wa-path	 (save-match-data (string-match "^\\(.*\\)[ \t]*\n?" l-wa-string) (match-string 1 l-wa-string))) ;; strip off \n
        )
@@ -1811,7 +1566,6 @@ NB: called from within a hook, careful with errors!
   ;; ----------
   (let* 
       (
-;;;        (l-ccm-string (vc-rational-synergy-command-to-string "finduse" p-4-part-name))
       (l-ccm-string (vc-rational-synergy-command-to-string (format "finduse %s" p-4-part-name)))
        l-path l-rel-path l-rel-path-version l-project-path l-project l-projects-alist l-start
        )
@@ -1831,22 +1585,6 @@ NB: called from within a hook, careful with errors!
 	  ;; Leave out for the moment: not sure which statuses should be
 	  ;; filtered out
 	  ;; ----------
-;;; 	  (setq l-projects-alist
-;;; 		(delq nil (mapcar
-;;; 			   (lambda (p-list)
-;;; 			     (let* 
-;;; 				 (
-;;; 				  (l-4-part-name (format "%s:project:1" (car p-list)))
-;;; 				  (l-status (vc-rational-synergy-command-to-string (format "%s attr -show status %s" vc-cmsyn-exe-name l-4-part-name)))
-;;; 				  )
-;;; 			       (save-match-data ;; chop off the end \n
-;;; 				 (string-match "\\([^\n]+\\)\n*" l-status)
-;;; 				 (setq l-status (match-string 1 l-status))
-;;; 				 )
-;;; 			       (when (member l-status (list "working" "visible" "shared")) p-list)
-;;; 			       )
-;;; 			     )
-;;; 			   l-projects-alist)))
 	  (cond
 	   ((equal (length l-projects-alist) 1)
 	    ;; left exactly 1
@@ -1872,7 +1610,6 @@ NB: called from within a hook, careful with errors!
 		    (message-box "%s is in multiple-projects, not 1 matching cached project %s!" p-4-part-name p-project-name)
 		  (error "%s is in multiple-projects, not 1 matching cached project %s!" p-4-part-name p-project-name)
 		  )
-;;;	      (when (and (not l-project) (not p-no-error-p)) (error "No project in working|visible|shared status found for %s (with cached project %s)" p-4-part-name p-project-name))
 		)
 	      )
 	     (p-prompt-project-if-not-unique ;; no cached project supplied, prompt for a project
@@ -1887,7 +1624,6 @@ NB: called from within a hook, careful with errors!
 		  (message-box "%s not used in a project, can't determine a unique Path for it!" p-4-part-name)
 		(error "%s not used in a project, can't determine a unique Path for it!" p-4-part-name)
 		)
-;;;	       (error "%s is used in more than 1 project, can't determine a unique Path for it!" p-4-part-name)
 	      )
 	     )
 	    )
@@ -1918,7 +1654,7 @@ NB: called from within a hook, careful with errors!
     (setq l-project-path    (when l-project (vc-cmsyn-wa-path-for l-project)))
     ;; trim white-space
     (setq l-project-path    (when l-project-path (save-match-data (string-match "[ \t]*\\([^ \t]+\\)[ \t]*" l-project-path) (match-string 1 l-project-path))))
-    (setq l-rel-path	    (when l-rel-path-version (car (split-string l-rel-path-version vc-cmsyn-version-object-separator))))
+    (setq l-rel-path	    (when l-rel-path-version (car (split-string l-rel-path-version vc-rational-synergy-version-object-separator))))
     ;; trim white-space
     (setq l-rel-path	    (when l-rel-path (save-match-data (string-match "[ \t]*\\([^ \t]+\\)[ \t]*" l-rel-path) (match-string 1 l-rel-path))))
     (when l-rel-path	    (list (expand-file-name l-rel-path l-project-path) l-project)) ;; result
@@ -1931,7 +1667,7 @@ NB: called from within a hook, careful with errors!
   Date          : May/2003
   Parameters    : P-4-PART-NAME: the CM Synergy unique 4-part-name.
   Returns       : string"
-  (save-match-data (string-match (format "^\\([^%s]+\\)%s" vc-cmsyn-version-object-separator vc-cmsyn-version-object-separator) p-4-part-name) (match-string 1 p-4-part-name))
+  (save-match-data (string-match (format "^\\([^%s]+\\)%s" vc-rational-synergy-version-object-separator vc-rational-synergy-version-object-separator) p-4-part-name) (match-string 1 p-4-part-name))
   )
 
 (defun vc-cmsyn-base-line-4-part-name-of (p-4-part-name)
@@ -1942,11 +1678,10 @@ NB: called from within a hook, careful with errors!
   Returns       : 4-part-name-string or nil"
   (let* 
       (
-       (l-list		      (split-string p-4-part-name (format "[%s:]" vc-cmsyn-version-object-separator)))
+       (l-list		      (split-string p-4-part-name (format "[%s:]" vc-rational-synergy-version-object-separator)))
        (l-ccm-type	      (nth 2 l-list))
        (l-instance	      (nth 3 l-list))
        (l-filename	      (nth 0 l-list))
-;;;        (l-use		      (vc-rational-synergy-command-to-string "finduse" p-4-part-name))
        (l-use		      (vc-rational-synergy-command-to-string (format "finduse %s" p-4-part-name)))
        l-project l-rp-bl-string l-bl-project l-file-1 l-result l-list
        )
@@ -1954,15 +1689,12 @@ NB: called from within a hook, careful with errors!
 	(setq l-result nil) ;; not used, or error-message, forget about it
       (setq l-project (car (split-string (nth 1 (split-string l-use "@")) "\n")))
       (setq l-rp-bl-string (vc-rational-synergy-command-to-string
-;;; 			    "rp" "-show" "bl" l-project ;; format <nr>) <projectname>\n
 			    (format "rp -show bl %s" l-project) ;; format <nr>) <projectname>\n
 			    ))
       (if (not (string-match "^[0-9]+\)[ \t]+[^ \t]+[ \t]*\n" l-rp-bl-string))
 	  (setq l-result nil) ;; not the right output, forget about this? Message?
 	(setq l-bl-project (nth 1 (split-string l-rp-bl-string)))
-;;;	l-bl-project l-filename l-ccm-type l-instance))
 	(setq l-file-1 (vc-rational-synergy-command-to-string
-;;; 		    "query" (format "\"is_member_of('%s') and name='%s' and type='%s' and instance='%s' \"" l-bl-project l-filename l-ccm-type l-instance) " -f" "\"%%objectname\""
 			(format "query \"is_member_of('%s') and name='%s' and type='%s' and instance='%s' \" -f \"%%objectname\""
 				l-bl-project l-filename l-ccm-type l-instance)
 			)
@@ -1979,47 +1711,6 @@ NB: called from within a hook, careful with errors!
     )
   )
 
-;; ----------
-;; VC Compatibility
-;; Add to handled backends
-;; ----------
-;; (when (not (member 'cmsyn vc-handled-backends))
-;;   (customize-set-variable 'vc-handled-backends (push 'cmsyn vc-handled-backends)))
-
-;;(defun vc-cmsyn-post-command-function (p-command p-file p-flags)
-;;  "Function run at the end of vc-do-command from the `vc-post-command-functions-hook', will test if the vc-command was a vc-cmsyn-command..
-;;  Author        : Realworld Systems (GR)
-;;  Date          : Apr/2003
-;;  Parameters    : P-COMMAND: See description of `vc-post-command-functions'
-;;                  P-FILE: See description of `vc-post-command-functions'
-;;                  P-FLAGS: See description of `vc-post-command-functions'
-;;  Returns       : -"
-;;  (when (equal p-command "ccm") ;; this is run after *every* call to vc-do-command!
-;;    (let* 
-;;	(
-;;	 (l-file-buffer (find-buffer-visiting p-file))
-;;	 )
-;;      ;; ----------
-;;      ;; *Eventually* set writable / readonly of buffer
-;;      ;; ----------      
-;;;;       (when (member (car p-flags) '("ci" "checkin" "co" "checkout" "create"))
-;;;; 	(vc-cmsyn-check-status-buffer)
-;;;; 	)
-;;      ;; ----------
-;;      ;; jump to output-buffer if told to do so
-;;      ;; ----------
-;;      (when vc-cmsyn-command-end-jump-to-output-buffer-p
-;;	(vc-cmsyn-show-buffer)
-;;	)
-;;      )
-;;    )
-;;  )
-;;
-;;(add-hook 'vc-post-command-functions 'vc-cmsyn-post-command-function)
-;;
-;;(defalias 'vc-cmsyn-checkin 'vc-cmsyn-ci-file)
-;;(defalias 'vc-cmsyn-checkout 'vc-cmsyn-co-file)
-
 
 (defun vc-cmsyn-responsible-p (p-file &optional p-prev p-absolute)
  "Check if the file P-FILE is located in a CM Synergy workarea"
@@ -2034,8 +1725,6 @@ NB: called from within a hook, careful with errors!
 		       (concat l-up "/"))                    )
 	 (l-prev     (if p-prev p-prev "")                   ) )
    
-   ;;(vc-cmsyn-buffer-insert 
-   ;; (concat "Scanning Rational Synergy file at: " l-path))
 
    (cond ((file-exists-p l-expanded)
 	  l-expanded)
@@ -2076,7 +1765,6 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
 	 (let* 
 	     (
 	      (l-file			(buffer-file-name))
-;;; 	      (l-object-name		(vc-rational-synergy-command-to-string "ls" "-f" "\"%%objectname\"" (vc-rational-synergy-platformify-path l-file)))
 	      (l-object-name		(vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
 	      l-version
 	      )
@@ -2092,150 +1780,6 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
    )
  )
 
-;; (defun vc-cmsyn-state (p-file)
-;;   "Check if this file was changed after checkout, calls ccm diff, is *slow*.
-;;   Author        : Realworld Systems (GR)
-;;   Date          : Apr/2003
-;;   Parameters    : P-FILE: File path to check for change
-;;   Returns       : boolean"
-;;   (let* 
-;;       (
-;;        (l-state (vc-file-getprop 'vc-state))
-;;        l-state-info
-;;        )
-;;     (when (not l-state)
-;;       (setq l-status (vc-rational-synergy-command-to-string (format "%s ls -f \"%%status\" %s" vc-cmsyn-exe-name (buffer-file-name))))
-;;       (setq l-state
-;; 	    (cond
-;; 	     ((not (member l-status vc-cmsyn-checked-out-status-list))
-;; 	      t
-;; 	      )
-;; 	     (t
-;; 	      ;; ----------
-;; 	      ;; do a diff with the last higher version, slow!
-;; 	      ;; ----------
-;; 	      )
-;; 	     )
-;; 	    )
-;;       (setq l-state-info (vc-rational-synergy-command-to-string (format "ccm diff %s " p-file)))
-;; ;;      (setq l-state (vc-rational-synergy-command-to-string (format "%s diff %s %s" vc-cmsyn-exe-name p-file (format "%s%s%s" p-file vc-cmsyn-version-object-separator "1"))))
-;;       (setq l-state
-;; 	    (cond
-;; 	     ((and (file-writable-p (p-file))
-;; 		   (> (length l-string) 0)
-;; 		   )
-;; 	      'edited ;; ==> ?? must know if the changes are in the parent or in the child! Could also be 'needs-patch or 'needs-merge!
-;; 	      )
-;; 	     ((and (not (file-writable-p (p-file)))
-;; 		   (zerop (length l-string))
-;; 		   )
-;; 	      'up-to-date ;; ==> ?? must know if the changes are in the parent or in the child! Could also be 'needs-patch or 'needs-merge!
-;; 	      )
-;; 	     )
-;; 	    )
-;;       (when (> (length l-state) 0)
-;; 	(setq l-state (make-symbol l-state))
-;; 	(vc-file-setprop 'vc-state l-state))
-;;       )
-;;     (equal l-state 'up-to-date)
-;;     )
-;;   )
+(provide 'vc-rational-synergy-base)
 
-;;(defun vc-cmsyn-state-heuristic ()
-;;  "get state-info of current file, called by vc when opening files, 1st sets state as retrievinn, async gets the state and sets in mode-line thten.
-;;  Date          : Apr/2003
-;;  Parameters    : 
-;;  Returns       : 
-;;  Methodology   : Partly copied from ccm-update-modeline, made asynchronous
-;;  Author        : Realworld Systems (GR)."
-;;  (interactive)
-;;  (vc-rational-synergy-check-session)
-;;  (when (buffer-file-name) ;; only if we are in a file there is version-information to display
-;;    (let* ((l-filename (file-name-nondirectory (buffer-file-name)))
-;;	   ;; ----------
-;;	   ;; retrieve the output with proc with filter, mode-line is updated by filter
-;;	   ;; ----------
-;;	   l-proc l-string
-;;	   )
-;;      (message "!! vc-cmsyn-update-modeline, Filename 1: -%s-" l-filename)
-;;      (setq comint-output-filter-functions
-;;	    (push 'shell-strip-ctrl-m
-;;		  comint-output-filter-functions))
-;;      ;; ----------
-;;      ;; set temp modeline-info (while waiting for the correct info from ccm)
-;;      ;; ----------
-;;      (setq l-string (format "%s-%s" l-filename "CMSynergyRetrievingVersion..."))
-;;      (vc-cmsyn-int-update-modeline l-string)
-;;      (message "!! Update modeline, file-naem: -%s-, default-dir: -%s-" l-filename default-directory)
-;;      (setq l-proc (start-process "vc-cmsyn" nil "ccm" "ls" "-f" (format "\"%%version:%%status\" %s" (buffer-file-name))))
-;;;;      (setq l-proc (start-process "vc-cmsyn" nil "ccm" "ls" "-f" (format "\"%%version:%%status\" %s" l-filename)))
-;;      (vc-cmsyn-map-proc-and-buffer l-proc (current-buffer))
-;;      (set-process-sentinel
-;;       l-proc
-;;       (lambda (p-proc p-what)
-;;	 ;; ----------
-;;	 ;; check modeline in case no output from process!
-;;	 ;; ----------
-;;	 (message "!! Update modeline sentinel: -%s-" p-what)
-;;	 (save-match-data 
-;;	   (let* 
-;;	       (
-;;		(l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-proc))
-;;		l-filename
-;;		)
-;;	     (when (and l-buffer (buffer-live-p l-buffer))
-;;	       (save-excursion
-;;		 (set-buffer l-buffer)
-;;		 (message "????: -%s-, modelinestring: -%s-" l-buffer vc-cmsyn-modeline-string)
-;;		 (when (string-match "CMSynergyRetrievingVersion...$" vc-cmsyn-modeline-string )
-;;		   (setq l-filename (file-name-nondirectory (buffer-file-name)))
-;;		   (vc-cmsyn-int-update-modeline l-filename)
-;;		   ;; ----------
-;;		   ;; and remove the mapping from the (global) alist again
-;;		   ;; ----------
-;;		   (vc-cmsyn-clear-buffer-mapping-for-proc p-proc)
-;;		   )
-;;		 )
-;;	       )
-;;	     )
-;;	   )
-;;	 )
-;;       )
-;;      (set-process-filter
-;;       l-proc
-;;       (lambda (p-proc p-string)
-;;	 ;; ----------
-;;	 ;; put the info from CM Synergy in the mode-line
-;;	 ;; ----------
-;;	 (message "!updating modeline filter!, string: -%s-" p-string)
-;;	 (save-match-data 
-;;	   (let* 
-;;	       (
-;;		(l-ccm-version (if (string-match "\\([^\:]+:[^:\n]+\\)\n" p-string) (match-string 1 p-string) "CMSynergyVersionUnknown"))
-;;		(l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-proc))
-;;		l-filename
-;;		)
-;;	     (message "!! Popbuffer in filter: -%s-, ccm-version: -%s-" l-buffer l-ccm-version)
-;;	     (when (and l-buffer (buffer-live-p l-buffer))
-;;	       (save-excursion
-;;		 (set-buffer l-buffer)
-;;		 (setq l-filename (file-name-nondirectory (buffer-file-name)))
-;;		 (vc-cmsyn-int-update-modeline (format "%s-%s" l-filename l-ccm-version))
-;;		 )
-;;	       )
-;;	     ;; ----------
-;;	     ;; and remove the mapping from the (global) alist again
-;;	     ;; ----------
-;;	     (vc-cmsyn-clear-buffer-mapping-for-proc p-proc)
-;;	     )
-;;	   )
-;;	 )
-;;       )
-;;      )
-;;    )
-;;   (vc-rational-synergy-check-session-pause)
-;;  )
-
-(provide 'vc-cmsyn)
-
-;;; vc-cmsyn.el ends here
+;;; vc-rational-synergy-base.el ends here

@@ -1,6 +1,7 @@
-;;; vc-rational-synergy-customization-base.el --- IBM Rational Synergy integration for Emacs
-
+;;; vc-rational-synergy.el --- Installation of cmsyn, CM Synergy mode
+ 
 ;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
+;; Copyright (C) 2003 Realworld Systems
  
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -13,12 +14,14 @@
 ;; GNU General Public License for more details.
  
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+ 
 
 ;; Author: 
 ;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+;;     Geert Ribbers
 ;;     
 ;; Maintainer:
 ;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
@@ -28,16 +31,15 @@
 ;; Keywords: ibm rational synergy telelogic vc version-control
 
 
+;;; Commentary:
+ 
+;; This installs the menu for the IBM Rational Synergy emacs interface
+ 
 ;;; Code:
 
+(require 'cm-synergy-script-mode)             ;; Mode for editing scripts
+(require 'vc-rational-synergy-menu)           ;; The menu
 
-(defgroup vc-rational-synergy nil
-  "Base group for IBM Rational Synergy definitions"
-  :tag "Base group for IBM Rational Synergy definitions"
-  :group 'programming
-  :group 'tools)
+(provide 'vc-rational-synergy)
 
-(provide 'vc-rational-synergy-customization-base)
-
-
-;;; vc-rational-synergy-customization-base.el ends here.
+;; vc-rational-synergy.el ends here
