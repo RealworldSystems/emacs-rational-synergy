@@ -31,31 +31,13 @@
 ;;; Code:
 
 
-(require 'vc-rational-synergy-customization-base)
+(require 'vc-rational-synergy-command)
 
-;;;; Customization definitions.
-
-(defgroup vc-rational-synergy-tooling nil
-  "Tooling definition options for Rational Synergy"
-  :tag "Tooling definition options for Rational Synergy"
-  :group 'vc-rational-synergy)
-
-(defcustom vc-rational-synergy-startup-path ""
-  "Sets the working path, if any, of the synergy binary"
-  :tag "Sets the working path, if any, of the synergy binary"
-  :type 'string
-  :group 'vc-rational-synergy-tooling)
-
-(defcustom vc-cmsyn-exe-name "ccm"
-  "The Rational Synergy executable name"
-  :tag "Rational Synergy executable name"
-  :type 'string
-  :group 'vc-rational-synergy-tooling)
 
 
 ;;;###autoload
 (defun vc-rational-synergy-command-to-string (command-line)
-  "Call `vc-cmsyn-exe-name' using one or more arguments
+  "Call `vc-rational-synergy-binary-name' using one or more arguments
 as it is illegal to call the binary without any arguments
 a premature error is thrown when this attempt is being made
 
@@ -85,17 +67,16 @@ with the actual content returned by the command"
   ;; Perform the command and construct s string from the lines
   ;; produced by process-lines. Return that string
   
-  (let ((binary (if (string= "" vc-rational-synergy-startup-path)
-		    vc-cmsyn-exe-name
-		  (expand-file-name vc-cmsyn-exe-name vc-rational-synergy-startup-path))))
-    (let ((lines (apply 'process-lines binary command-line))
-	  (result nil))
-      (message (prin1-to-string lines))
-      (dolist (elt lines)
-	(if result
-	    (setq result (concat result (make-string 1 ?\n) elt))
-	  (setq result elt)))
-      result)))
+  (let ((lines (apply 'process-lines 
+		      (vc-rational-synergy-binary-name) ;; name of binary
+		      command-line))
+	(result nil))
+    (message (prin1-to-string lines))
+    (dolist (elt lines)
+      (if result
+	  (setq result (concat result (make-string 1 ?\n) elt))
+	(setq result elt)))
+    result))
     
 
 (provide 'vc-rational-synergy-command-to-string)

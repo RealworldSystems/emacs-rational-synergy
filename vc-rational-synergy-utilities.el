@@ -28,6 +28,10 @@
 ;; Keywords: ibm rational synergy telelogic vc version-control
 
 
+;;; Commentary:
+
+;; These are utility functions used by the rational synergy integration
+
 ;;; Code:
 
 ;;;###autoload
@@ -43,6 +47,41 @@ without adding a drive prefix"
   (if (eq system-type 'windows-nt)
       (mapconcat '(lambda(x) (char-to-string (if (eq x ?/) ?\\ x))) path nil)
     (mapconcat '(lambda(x) (char-to-string (if (eq x ?\\) ?/ x))) path nil)))
+
+;;;###autoload
+(defun vc-rational-synergy-dos2unix ()
+ "Convert this buffer from <return><newline> endings to <newline> endings"
+ (interactive)
+ (save-excursion
+   (goto-char (point-min))
+   (while (re-search-forward "\r$" nil t)
+     (replace-match "" nil nil))
+   (goto-char (1- (point-max)))
+   (if (looking-at "\C-z")
+       (delete-char 1))))
+
+(defun vc-rational-synergy-result-error-p (value)
+  "Checks if a given result string indicates a CCM error"
+  (string-match vc-rational-synergy-warning-error-output-regexp value))
+
+(defun vc-rational-synergy-result-okay-p (value)
+  "Checks if a given result string does not indicate a CCM error"
+  (not vc-rational-synergy-result-error-p value))
+
+
+(defmacro with-vc-rational-synergy-comint-strip-ctrl-m (&rest program)
+  "Sets the shell-string-ctrl-m function to comint-output-filter-functions
+and reverts back to the original after running program"
+  `(progn
+     (let ((old-output-filter-functions comint-output-filter-functions))
+       (setq comint-output-filter-functions
+	     (push 'shell-strip-ctrl-m old-output-filter-functions))
+       (unwind-protect
+	   ,(cons 'progn program)
+	 (setq comint-output-filter-functions old-output-filter-functions)))))
+	 
+  
+
 
 (provide 'vc-rational-synergy-utilities)
 

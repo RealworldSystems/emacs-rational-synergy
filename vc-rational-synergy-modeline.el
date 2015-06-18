@@ -30,9 +30,6 @@
 
 ;;; Code:
 
-(require 'vc-rational-synergy-command-to-string)
-(require 'vc-rational-synergy-authentication)
-
 (if (not (fboundp `redraw-modeline))
     (defalias `redraw-modeline `force-mode-line-update))
 
@@ -54,65 +51,41 @@
     )
   )
 
+(defun vc-rational-synergy--update-modeline-version (version)
+  "Displays the actual version information in the modeline"
+  
+  ;; Split the answer at : if there is no error-message
+  ;; there may be text before the answer: chop off, the answer is a line
+  ;; of its own, the last
+  (save-match-data
+    (let* (
+	   (expression "\\(.*\n\\)*\\([^@\n]+\\)@@\\([^@\n]+\\)\n")
+	   (ccm-version (if (and 
+			     (string-match expression version)
+			     (vc-rational-synergy-result-okay-p version))
+			    (format "%s:%s" (match-string 2 l-string)
+				    (match-string 3 l-string))
+			  "CMSynergyVersion??"))
+	   (writable-string (if buffer-read-only "-" ":")))
+      (vc-rational-synergy-int-update-modeline 
+       (format "%s%s%s" filename writable-string ccm-version)))))
+
 ;;;###autoload
 (defun vc-rational-synergy-update-modeline ()
-  "Show file name, version and status in the modeline, retrieving the information asynchronously so user doesnt' have to wait.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : Partly copied from ccm-update-modeline, made asynchronous
-  Author        : Realworld Systems (GR)."
+  "Show file name, version and status in the modeline"
   (interactive)
-  (vc-rational-synergy-check-login)
-  (when (buffer-file-name) ;; only if we are in a file there is version-information to display
-    (let* ((l-filename (file-name-nondirectory (buffer-file-name)))
-	   ;; ----------
-	   ;; retrieve the output with proc with filter, mode-line is updated by filter
-	   ;; ----------
-	   l-proc l-string
-	   )
-      (setq comint-output-filter-functions
-	    (push 'shell-strip-ctrl-m
-		  comint-output-filter-functions))
-      ;; ----------
-      ;; set temp modeline-info (while waiting for the correct info from ccm)
-      ;; ----------
-      (setq l-string (format "%s-%s" l-filename "CMSynergyRetrievingVersion..."))
-      (vc-rational-synergy-int-update-modeline l-string)
-      ;; ----------
-      ;; Changed: GR: calling `start-process' seems to give hanging
-      ;; processes now and then. Changed to `call-process' therefore
-      ;; ----------
-      (setq l-string (vc-rational-synergy-command-to-string (format "ls -f \"%%version@@%%status\" %s" (vc-rational-synergy-platformify-path (buffer-file-name)))))
-      ;; ----------
-      ;; put the info from CM Synergy in the mode-line
-      ;; ----------
-      (message "!! CCM VERSION-String: -%s-" l-string)
-      (save-match-data
-	(let* 
-	    (
-	     ;; ----------
-	     ;; Split the answer at : if there is no error-message
-	     ;; there may be text before the answer: chop off, the answer is a line
-	     ;; of its own, the last
-	     ;; ----------
-	     (l-ccm-version (if (and (string-match "\\(.*\n\\)*\\([^@\n]+\\)@@\\([^@\n]+\\)\n" l-string)
-				     (not (string-match vc-rational-synergy-warning-error-output-regexp l-string))
-				     )
-				(format "%s:%s"(match-string 2 l-string) (match-string 3 l-string))
-			      "CMSynergyVersion??"))
-	     (l-buffer (current-buffer))
-	     (l-writable-string (if buffer-read-only "-" ":"))
-	     (l-filename (vc-rational-synergy-platformify-path (file-name-nondirectory (buffer-file-name))))
-	     )
-	  (vc-rational-synergy-int-update-modeline (format "%s%s%s" l-filename l-writable-string l-ccm-version))
-	  )
-	)
-      )
-    )
-  (vc-rational-synergy-check-logout)
-  )
 
+  (with-vc-rational-synergy
+   (when (buffer-file-name) ;; only if we are in a file there is version-information to display
+     (let* ((filename (file-name-nondirectory (buffer-file-name))))
+
+       (with-vc-rational-synergy-comint-strip-ctrl-m
+	(let ((version (vc-rational-synergy-command-to-string 
+			`("ls" "-f" "\"%%version@@%%status\" %s" 
+			  ,(vc-rational-synergy-platformify-path (buffer-file-name))))))
+
+	  (when version
+	    vc-rational-synergy--update-modeline-version version)))))))
 
 (provide 'vc-rational-synergy-modeline)
 

@@ -37,7 +37,7 @@
 
 ;;;; Versioning.
 
-(defconst vc-rational-synergy-int-vexbrsion-string
+(defconst vc-rational-synergy-int-version-string
   "0.9.norelease"
   "The version string of the current rational synergy integration module")
 

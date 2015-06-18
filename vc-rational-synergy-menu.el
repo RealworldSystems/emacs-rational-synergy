@@ -63,6 +63,7 @@
 (require 'vc-rational-synergy-about)          ;; The about message
 (require 'vc-rational-synergy-authentication) ;; explicit login/logout
 (require 'vc-rational-synergy-base)           ;; base functionality
+(require 'vc-rational-synergy-modeline)       ;; modeline functionality
 
 (require 'vc-rational-synergy-customization-base)
 
@@ -83,51 +84,164 @@
 
 ;;;; Menu definition.
 
-(easy-menu-define menu-bar-vc-rational-synergy-menu nil "IBM Rational Synergy menu"
-  (list "IBM Rational Synergy"
-	["Login..." vc-rational-synergy-login]
-	["Logout..." vc-rational-synergy-logout]
-	"---"
-	["Show Default Task"			  vc-cmsyn-show-default-task   	    :keys "C-c RET d"]
-	["Show Task Files"			  vc-cmsyn-show-task-files]
-	["Open Task Files"			  vc-cmsyn-open-task-files]
-	["Select Task"				  vc-cmsyn-select-task	   	    :keys "C-c RET s"]
-;; 	["Create New Task" vc-cmsyn-create-task]
-	"---"
-	["Check Out This File"			  vc-cmsyn-co-file			  :active vc-cmsyn-mode  :keys "C-c RET o"]
-	["Undo Check Out File"			  vc-cmsyn-undo-co-file			  :active vc-cmsyn-mode  :keys "C-c RET u"]
-	["Checkout This Directory"		  vc-cmsyn-co-directory			  :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
-	["Undo Checkout Directory"		  vc-cmsyn-undo-co-directory		  :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
-	"---"
-	["Check In This File"			  vc-cmsyn-ci-file			  :active vc-cmsyn-mode  :keys "C-c RET i"]
-;;
-;; TODO: Should really be enabled
-;; 	["Check In This Directory" vc-cmsyn-ci-directory	      :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
-;;
-	["Register"			          vc-cmsyn-register-file  	          :active vc-cmsyn-mode  :keys "C-c RET r"]
-	["Register Directory and Files"	          vc-cmsyn-create-directory		  :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
-	"---"
-	["Check In Task"			  vc-cmsyn-ci-task	                  :keys "C-c RET t"]
-	"---"
-	["Update Modeline"			  vc-cmsyn-update-modeline]
-	"---"
-	["Show Properties"	   	          vc-cmsyn-properties			  :active vc-cmsyn-mode  :keys "C-c RET p"]
-	'("Show history"
-	  ["This file (graphics)"		  vc-cmsyn-history-file-graphics	  :active vc-cmsyn-mode  :keys "C-c RET h"]
-	  ["This file (details)"		  vc-cmsyn-history-file-details		  :active vc-cmsyn-mode ]
-	  ["This directory (graphics)"		  vc-cmsyn-history-directory-graphics	  :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
-	  ["This directory (details)"		  vc-cmsyn-history-directory-details	  :active (or (equal major-mode 'dired-mode) vc-cmsyn-mode )]
-	  )
-	'("Compare"
-	  ["With Previous Version"	          vc-cmsyn-ediff			  :active vc-cmsyn-mode ]
-	  ["With Other Version"		          vc-cmsyn-ediff-other-version		  :active vc-cmsyn-mode ]
-	  ["Versions"			          vc-cmsyn-ediff-versions		  :active vc-cmsyn-mode ]
-	  )
-	"---" 
-	["Customize..."				  (customize-group 'vc-rational-synergy)]
-	["Info..."				  vc-cmsyn-info]
-	["About IBM Rational Synergy Mode"        vc-rational-synergy-about])
+
+(let ((dir-mode-check '(or (equal major-mode 'dired-mode) vc-cmsyn-mode ))
+      (p (lambda (i) (make-symbol (concat "vc-rational-synergy-" (symbol-name i))))))
+  (easy-menu-define menu-bar-vc-rational-synergy-menu nil "IBM Rational Synergy menu"
+
+    `("IBM Rational Synergy"
+   
+      ["Login..."           ,(apply p '(login))]
+      ["Logout..."          ,(apply p '(logout))]
+      "---"
+      
+      ["Show Default Task"  ,(apply p '(show-default-task)) :keys "C-c RET d"]
+      ["Show Task Files"    ,(apply p '(show-task-files))]
+      ["Open Task Files"    ,(apply p '(open-task-files))]
+      ["Select Task"	    ,(apply p '(select-task))       :keys "C-c RET s"]
+      ["Check In Task"	    ,(apply p '(ci-task))           :keys "C-c RET t"]
+
+      ;; ["Create New Task" ,(apply p '(create-task]
+      "---"
+      
+      ("File"
+	
+       ["Checkout"      ,(apply p '(co-file))        :active ,vc-cmsyn-mode
+                                                     :keys "C-c RET o"]
+       ["Undo Checkout" ,(apply p '(undo-co-file))   :active vc-cmsyn-mode
+                                                     :keys "C-c RET u"]
+       ["Checkin"       ,(apply p '(ci-file))        :active vc-cmsyn-mode
+                                                     :keys "C-c RET i"]
+       ["Register"      ,(apply p '(register-file))  :active vc-cmsyn-mode
+	                                             :keys "C-c RET r"])
+      ("Directories"
+       ["Checkout"	 ,(apply p '(co-directory))     :active ,dir-mode-check]
+       ["Undo Checkout" ,(apply p '(undo-co-directory)) :active ,dir-mode-check]
+       ["Register"      ,(apply p '(create-directory))  :active ,dir-mode-check]
+	;; TODO: Should really be enabled
+	;;["Check In"    ,(apply p '(ci-directory))   :active ,dir-mode-check]
+	)
+      "---"
+      
+      
+      ["Update Modeline" ,(apply p '(update-modeline))]
+      "---"
+
+      ["Show Properties" ,(apply p '(properties))     :active vc-cmsyn-mode
+                                                      :keys "C-c RET p"]
+
+      ("History"
+       ["File (graphics)" ,(apply p '(history-file-graphics)) :active vc-cmsyn-mode
+	                                                      :keys "C-c RET h"]
+       ["File (details)"       ,(apply p '(history-file-details))  :active vc-cmsyn-mode ]
+       ["Directory (graphics)" ,(apply p '(history-directory-graphics)) :active ,dir-mode-check]
+       ["Directory (details)"  ,(apply p '(history-directory-details))  :active ,dir-mode-check])
+
+      ("Compare"
+       ["With Previous Version" ,(apply p '(ediff))               :active vc-cmsyn-mode ]
+       ["With Other Version"    ,(apply p '(ediff-other-version)) :active vc-cmsyn-mode ]
+       ["Versions"              ,(apply p '(ediff-versions))      :active vc-cmsyn-mode ])
+      "---" 
+
+      ["Customize..."		 (customize-group 'vc-rational-synergy)]
+      ["Info..."		,(apply p '(info))]
+      ["About..."               ,(apply p '(about))])))
+
+
+
+;;;; Activate the menu
+
+(defun vc-rational-synergy-menu-path-changed (p-var p-val)
+  "Set custom-option `vc-rational-synergy-menu-path' and move menu if applicable.
+  Author        : Realworld Systems (GR)
+  Date          : Apr/2003
+  Parameters    : 
+  Returns       : "
+  ;; ----------
+  ;; remove an evt. old menu
+  ;; ----------
+  (when (boundp p-var)
+    (easy-menu-remove-item global-map (car (symbol-value p-var)) "CMSynergy")
+    (when (not (string-equal "menu-bar" (caar p-val))) ;; make sure menu-bar is the 1st entry
+      (setq p-val (cons (cons "menu-bar" (car p-val)) (cdr p-val)))
+      )
+    )
+  (custom-set-default p-var p-val)
+  (easy-menu-add-item global-map (car p-val) menu-bar-vc-rational-synergy-menu (cdr p-val))
   )
+
+(when (boundp 'menu-bar-final-items) (set-variable 'menu-bar-final-items (cons 'CMSynergy (symbol-value 'menu-bar-final-items))))
+
+(defcustom vc-rational-synergy-menu-path
+ (cons (list "menu-bar") "separator-vc") 
+  "*Indicates the place of the CM Synergy menu in the menu-bar (no elements -so nil- is at top).
+path-elements have to be checked in the menu-bar, examples: files for File-menu, edit, search, buffer, options.
+  Date          : Apr/2003
+  Author        : Realworld Systems (GR)."
+  :tag "Menu Path for CM Synergy menu"
+  :type '(cons :tag "Menu-path"
+	       (repeat (string     :tag "Path element (like \`tools' or \`menu-bar')"))
+	       (string	      :tag "Optional before item like separator-vc or help")
+	       )
+  :set 'vc-rational-synergy-menu-path-changed
+  :group 'vc-rational-synergy
+  )
+
+;;;; Administrative options.
+
+
+(provide 'vc-rational-synergy-menu)
+
+;;; vc-rational-synergy-menu.el ends here
+
+
+
+
+;;;; Activate the menu
+
+(defun vc-rational-synergy-menu-path-changed (p-var p-val)
+  "Set custom-option `vc-rational-synergy-menu-path' and move menu if applicable.
+  Author        : Realworld Systems (GR)
+  Date          : Apr/2003
+  Parameters    : 
+  Returns       : "
+  ;; ----------
+  ;; remove an evt. old menu
+  ;; ----------
+  (when (boundp p-var)
+    (easy-menu-remove-item global-map (car (symbol-value p-var)) "CMSynergy")
+    (when (not (string-equal "menu-bar" (caar p-val))) ;; make sure menu-bar is the 1st entry
+      (setq p-val (cons (cons "menu-bar" (car p-val)) (cdr p-val)))
+      )
+    )
+  (custom-set-default p-var p-val)
+  (easy-menu-add-item global-map (car p-val) menu-bar-vc-rational-synergy-menu (cdr p-val))
+  )
+
+(when (boundp 'menu-bar-final-items) (set-variable 'menu-bar-final-items (cons 'CMSynergy (symbol-value 'menu-bar-final-items))))
+
+(defcustom vc-rational-synergy-menu-path
+ (cons (list "menu-bar") "separator-vc") 
+  "*Indicates the place of the CM Synergy menu in the menu-bar (no elements -so nil- is at top).
+path-elements have to be checked in the menu-bar, examples: files for File-menu, edit, search, buffer, options.
+  Date          : Apr/2003
+  Author        : Realworld Systems (GR)."
+  :tag "Menu Path for CM Synergy menu"
+  :type '(cons :tag "Menu-path"
+	       (repeat (string     :tag "Path element (like \`tools' or \`menu-bar')"))
+	       (string	      :tag "Optional before item like separator-vc or help")
+	       )
+  :set 'vc-rational-synergy-menu-path-changed
+  :group 'vc-rational-synergy
+  )
+
+;;;; Administrative options.
+
+
+(provide 'vc-rational-synergy-menu)
+
+;;; vc-rational-synergy-menu.el ends here
+
 
 
 ;;;; Activate the menu

@@ -33,6 +33,7 @@
 ;;; Code:
 
 (require 'vc-rational-synergy-command-to-string)
+(require 'vc-rational-synergy-command)
 (require 'vc-rational-synergy-utilities)
 (require 'vc-rational-synergy-authentication)
 (require 'vc-rational-synergy-modeline)
@@ -64,7 +65,7 @@
        (l-message (format "Starting check out of %s..." l-filename))
        l-proc
        )
-    (vc-cmsyn-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-file nil t)
+    (vc-rational-synergy-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-file nil t)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -92,7 +93,7 @@
        (l-message (format "Starting check out of directory %s..." l-filename))
        l-proc
        )
-    (vc-cmsyn-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-directory nil t)
+    (vc-rational-synergy-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-directory nil t)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -113,7 +114,7 @@
        (l-message (format "Starting undo check out of %s..." l-filename))
        l-proc
        )
-    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-file nil t)
+    (vc-rational-synergy-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-file nil t)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -134,7 +135,7 @@
        (l-message (format "Starting undo check out of %s..." l-filename))
        l-proc
 	)
-    (vc-cmsyn-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-directory nil t)
+    (vc-rational-synergy-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-directory nil t)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -155,8 +156,8 @@
 	 (l-attr-command      (when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-filename))))
 	 (l-message	      (format "Starting registration of %s..." l-filename))
 	 )
-    (vc-cmsyn-run-command l-message l-create-command 'vc-cmsyn-sentinel-register-file nil (not p-dont-check-task))
-    (when l-attr-command (vc-cmsyn-run-command "Setting version..." l-attr-command)))
+    (vc-rational-synergy-run-command l-message l-create-command 'vc-cmsyn-sentinel-register-file nil (not p-dont-check-task))
+    (when l-attr-command (vc-rational-synergy-run-command "Setting version..." l-attr-command)))
   (vc-rational-synergy-check-session-pause)
   )
 
@@ -191,7 +192,7 @@
     (message "Registering Directory: -%s-..." l-dir)
     (setq l-create-command	(format "create -type dir %s" (vc-rational-synergy-platformify-path l-dir)))
     (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
-    (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
+    (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
     (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Registering %s" l-dir))
     (dolist (i-file l-files)
       ;; ----------
@@ -214,12 +215,12 @@
 		  (format "create %s" l-file))) ;; type determined from extension
 	  (message "Registering: %s" l-file)
 	  (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
-	  (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
+	  (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
 	  (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Registering %s, see Synergy output-buffer for details" l-dir))
 	  (when l-version
 	    (setq l-attr-command (format "attr -modify version -value %s %s" l-version l-file))
 	    (setq l-string (vc-rational-synergy-command-to-string l-attr-command))
-	    (save-excursion (set-buffer (vc-cmsyn-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
+	    (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
 	    (when (string-match vc-cmsyn-warning-error-output-regexp l-string) (error "Failed Setting version %s at %s" l-version l-file))
 	    )
 	  (when vc-rational-synergy-register-checks-in-p
@@ -263,7 +264,7 @@
 		      (format "ci -c \"%s\" %s" l-comment (vc-rational-synergy-platformify-path l-filename))))
        l-proc
        )
-    (vc-cmsyn-run-command l-message l-command  'vc-cmsyn-sentinel-ci-file nil (not p-dont-check-task))
+    (vc-rational-synergy-run-command l-message l-command  'vc-cmsyn-sentinel-ci-file nil (not p-dont-check-task))
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -295,7 +296,7 @@
 		      (format "ci -c \"%s\" %s" l-comment (vc-rational-synergy-platformify-path l-filename))))
        l-proc
        )
-    (vc-cmsyn-run-command l-message l-command 'vc-cmsyn-sentinel-ci-directory nil t)
+    (vc-rational-synergy-run-command l-message l-command 'vc-cmsyn-sentinel-ci-directory nil t)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -313,7 +314,7 @@
 	 (l-filename (buffer-file-name))
 	 (l-command (format "history %s -g" (vc-rational-synergy-platformify-path l-filename)))
 	 )
-    (vc-cmsyn-run-command "Retrieving history..." l-command 'vc-cmsyn-sentinel-history-graphics)
+    (vc-rational-synergy-run-command "Retrieving history..." l-command 'vc-cmsyn-sentinel-history-graphics)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -331,7 +332,7 @@
 	 (l-filename (buffer-file-name))
 	 (l-command (format "history %s" (vc-rational-synergy-platformify-path l-filename)))
 	 )
-    (vc-cmsyn-run-command "Retrieving history..." l-command)
+    (vc-rational-synergy-run-command "Retrieving history..." l-command)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -349,7 +350,7 @@
 	 (l-filename (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
 	 (l-command (format "history %s -g" (vc-rational-synergy-platformify-path l-filename)))
 	 )
-    (vc-cmsyn-run-command "Retrieving history..." l-command 'vc-cmsyn-sentinel-history-graphics)
+    (vc-rational-synergy-run-command "Retrieving history..." l-command 'vc-cmsyn-sentinel-history-graphics)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -367,7 +368,7 @@
 	 (l-filename (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
 	 (l-command (format "history %s" (vc-rational-synergy-platformify-path l-filename)))
 	 )
-    (vc-cmsyn-run-command "Retrieving history..." l-command)
+    (vc-rational-synergy-run-command "Retrieving history..." l-command)
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -386,24 +387,18 @@
        (l-comment (read-string "Checkin-comment (newlines with S-RET, RET when done): " ))
        l-proc
        )
-    (vc-cmsyn-run-command l-message (format "task -checkin default -comment \"%s\"" l-comment) 'vc-cmsyn-sentinel-ci-task nil t)
+    (vc-rational-synergy-run-command l-message (format "task -checkin default -comment \"%s\"" l-comment) 'vc-cmsyn-sentinel-ci-task nil t)
     )
   (vc-rational-synergy-check-session-pause)
   )
 
 ;;;###autoload
-(defun vc-cmsyn-show-default-task ()
-  "Display default task in the work buffer.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : When configured to do so, iconifies frame so the CM Synergy gui becomes visible
-  Author        : Realworld Systems (GR)."
+(defun vc-rational-synergy-show-default-task ()
+  "Display default task in the work buffer."
   (interactive)
-  (vc-rational-synergy-check-session)
-  (vc-cmsyn-run-command "Retrieving Current Default Task" "task -default")
-  (vc-rational-synergy-check-session-pause)
-  )
+  
+  (with-vc-rational-synergy
+   (vc-rational-synergy-run-command "Retrieving Current Default Task" '("task" "-default"))))
 
 ;;;###autoload
 (defun vc-cmsyn-show-task-files ()
@@ -422,7 +417,7 @@
        (l-list (split-string l-string ":"))
        (l-task (car l-list)) ;; the nr.
        )
-    (vc-cmsyn-run-command (format "Retrieving files for task %s..." l-string) (format "task -show objects -f \"%%objectname\" %s" l-task))
+    (vc-rational-synergy-run-command (format "Retrieving files for task %s..." l-string) (format "task -show objects -f \"%%objectname\" %s" l-task))
     )
   (vc-rational-synergy-check-session-pause)
   )
@@ -514,7 +509,7 @@
   (let* ((l-filename (buffer-file-name))
 	 (l-prop-command (format "prop %s" (vc-rational-synergy-platformify-path l-filename))))
 ;;     (vc-cmsyn-show-buffer)
-    (vc-cmsyn-run-command "Properties..." l-prop-command))
+    (vc-rational-synergy-run-command "Properties..." l-prop-command))
   (vc-rational-synergy-check-session-pause)
   )
 
@@ -522,612 +517,14 @@
   "Create a new task"
   (interactive)
   (vc-rational-synergy-check-session)
-  (vc-cmsyn-report "Starting create Task...")
+  (vc-rational-synergy-report "Starting create Task...")
   (let*
       (
-       (l-proc (start-process vc-cmsyn-exe-name (vc-cmsyn-buffer)
-					    vc-cmsyn-exe-name "create_task" "-g")))
+       (l-proc (start-process vc-rational-synergy-binary-name (vc-rational-synergy-buffer)
+					    vc-rational-synergy-binary-name "create_task" "-g")))
     )
   (vc-rational-synergy-check-session-pause)
   )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Utility Functions
-
-(defvar vc-cmsyn-process-start-mark
-  nil
-  "*buffer-local var used for storing begin of process in the vc-cmsyn output-buffer.
-  Date          : Aug/2003
-  Author        : Realworld Systems (GR)."
-  )
-(make-variable-buffer-local 'vc-cmsyn-process-start-mark)
-
-(defun vc-cmsyn-run-command (p-info p-command &optional p-sentinel p-filter p-check-task-set-p)
-  "Call the CM Synergy executable with the parameter-line P-COMMAND, supplying info with P-INFO.
-  Date          : Apr/2003
-  Parameters    : P-INFO: Message to report
-                  P-COMMAND: part of command-line after the name of the executable
-  Returns       : 
-  Author        : Realworld Systems (GR)."
-  ;; ----------
-  ;; check task set, if applicable
-  ;; ----------
-  (and vc-rational-synergy-check-default-task-set-p p-check-task-set-p (vc-cmsyn-check-task-set t))
-  (let* 
-      ((l-sentinel (or p-sentinel 'vc-cmsyn-sentinel))
-       (l-current-buffer (current-buffer))
-       (l-proc-buffer (vc-cmsyn-buffer))
-       l-proc)
-    (save-excursion
-      (set-buffer l-proc-buffer)
-      (goto-char (point-max))
-      (setq vc-cmsyn-process-start-mark (point-marker))	;; buffer-local variable
-      )
-    (vc-cmsyn-report (format "\n%s\n" p-info))
-    (setq comint-output-filter-functions
-	  (push 'shell-strip-ctrl-m
-		comint-output-filter-functions))
-    (setq l-proc (apply 'start-process vc-cmsyn-exe-name l-proc-buffer
-			vc-cmsyn-exe-name (vc-cmsyn-split-string-carefully p-command))) ;; the arguments need to be a list since emacs20
-    (vc-cmsyn-map-proc-and-buffer l-proc l-current-buffer)
-    (set-process-sentinel l-proc l-sentinel)
-    (set-process-filter l-proc (or p-filter 'vc-cmsyn-process-filter))
-    l-proc
-    )
-  )
-
-(defun vc-cmsyn-split-string-carefully (p-string &optional p-separators)
-  "splits string P-STRING such that parts within \" \" inside the string will stay 1 unit.
-  Author        : Realworld Systems (MO)
-  Date          : Jan/2005
-  Parameters    : P-STRING: string to split
-  Returns       : list with string-parts"
-  (let* 
-      (
-       (l-string-to-split p-string)
-       (l-splits)
-       )
-    (while (not (zerop (length l-string-to-split)))
-      (if (string-match "^\\([^\"]*\\)\\(\"[^\"]*\"\\)\\(.*\\)" l-string-to-split)
-	  (progn
-	    (setq l-splits (nconc l-splits
-				  (save-match-data (split-string (match-string 1 l-string-to-split) p-separators))
-				  (list (match-string 2 l-string-to-split))
-				  ))
-	    (setq l-string-to-split (match-string 3 l-string-to-split))
-	    )
-	(setq l-splits (nconc l-splits (save-match-data (split-string l-string-to-split p-separators))))
-	(setq l-string-to-split nil)
-	)
-      )
-    l-splits
-    )
-  )
-
-(defun vc-cmsyn-process-filter (p-proc p-string)
-  "Insert the output string in process-buffer, at the end.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PROC: running proc
-                  P-STRING: outputstring
-  Returns       : -"
-  (set-buffer (vc-cmsyn-buffer))
-  (goto-char (point-max))
-  (insert p-string)
-  )
-
-(defvar vc-cmsyn-buffer-frame
-  nil
-  "*The frame with the cmsyn-output-buffer.
-  Date          : Apr/2003
-  Author        : Realworld Systems (GR)."
-  )
-
-(defun vc-cmsyn-buffer (&optional p-stay-in-current-frame)
-  "Return the output-buffer for the ccm process: create if not there yet, will create in separate frame.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : ccm outputbuffer"
-  (save-excursion
-    (let* 
-	(
-	 (l-current-frame	(selected-frame))
-	 (l-buffer		(get-buffer-create vc-rational-synergy-buffer-name))
-	 )
-      l-buffer
-      )
-    )
-  )
-
-(defun vc-cmsyn-buffer-insert (p-message)
-  "Insert message P-MESSAGE.in the vc-cmsyn output buffer
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-MESSAGE: message to insert
-  Returns       : "
-  (with-current-buffer (vc-cmsyn-buffer)
-    (goto-char (point-max))
-    (insert (format "\n%s\n" p-message))
-    )
-  )
-
-(defun vc-cmsyn-report (p-message)
-  "Report the message in minibuffer and in output-buffer.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-MESSAGE: message to report
-  Returns       : "
-  (message p-message)
-  (vc-cmsyn-buffer-insert p-message)
-  )
-
-(defvar vc-cmsyn-proc-buffer-mappings
-  nil
-  "*Alist with mappings of filter-proc with the buffer it should work on.
-  Date          : Apr/2003
-  Author        : Realworld Systems (GR)."
-  )
-
-(defun vc-cmsyn-map-proc-and-buffer (p-proc p-buffer)
-  "Store parameters in a cons in alist `vc-cmsyn-proc-buffer-mappings' for later retrieval in sentinel or filter for proc.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Paramehters    : P-BUFFER: Buffer to be retrieved within sentinel or filter for proc
-                  P-PROC: key for the alist
-  Returns       : -"
-  (push (cons p-proc p-buffer) vc-cmsyn-proc-buffer-mappings)
-  )
-
-(defun vc-cmsyn-get-buffer-mapped-to-proc (p-proc)
-  "Get the buffer that was mapped in combination with proc P-PR0C in variable `vc-cmsyn-proc-buffer-mappings'.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PROC: The key for the mapping
-  Returns       : buffer or nil"
-  (cdr (assoc p-proc vc-cmsyn-proc-buffer-mappings))
-  )
-
-(defun vc-cmsyn-clear-buffer-mapping-for-proc (p-proc)
-  "Remove the entry for proc P-PROC.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PROC: Key for the buffer-proc-mapping
-  Returns       : -"
-  (setq vc-cmsyn-proc-buffer-mappings (assq-delete-all p-proc vc-cmsyn-proc-buffer-mappings))
-  )
-
-
-(defun vc-cmsyn-sentinel (p-process p-what &optional p-dont-popup-process-buffer)
-  "Function running at the end of a ccm process, called directly as sentinel, *or* from specific sentinels for specific funtions.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-                  P-DONT-POPUP-PROCESS-BUFFER: if non-nil the ccm output-buffer will not be shown
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       )
-    (set-buffer l-output-buffer)
-    (goto-char (point-max))
-    (vc-cmsyn-dos2unix)
-    ;; ----------
-    ;; and clear the buffer-proc-mapping
-    ;; ----------
-    (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
-    (vc-cmsyn-report (format "CM Synergy Command %s" p-what))
-    (when (and vc-rational-synergy-command-end-jump-to-output-buffer-p
-	       (not p-dont-popup-process-buffer)
-	       )
-      (vc-cmsyn-show-output-buffer)
-      )
-    (set-buffer l-buffer)
-    (vc-cmsyn-update-modeline) ;; and this also sets status-buffer!
-    )
-  )
-
-(defun vc-cmsyn-show-output-buffer ()
-  "Switch to the output-buffer and put cursor at the end, this may be to the separate frame or within the current frame.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : -"
-  (let* 
-      (
-       (l-proc-buffer (vc-cmsyn-buffer))
-       (l-win (get-buffer-window l-proc-buffer 0))
-       (l-frame (when l-win (window-frame l-win)))
-       )
-    (if l-frame
-	(select-frame-set-input-focus l-frame)
-      (pop-to-buffer l-proc-buffer)
-      )
-    (goto-char (point-max))
-    )
-  )
-
-(defun vc-cmsyn-sentinel-co-file (p-process p-what &optional p-dont-check-parallel-versions)
-  "Function running at the end of the ccm co process for a file, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-		  P-DONT-CHECK-PARALLEL-VERSIONS: if non-nil the parallel-version-check is skipped: used when this sentinel is
-		    called from another, instead of directly as sentinel.
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       )
-    ;; ----------
-    ;; check parallel versions
-    ;; ----------
-    (when (not p-dont-check-parallel-versions)
-      (save-excursion
-	(set-buffer l-output-buffer)
-	(when (re-search-backward "Starting check out of" nil t)
-	  (when (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	    (x-popup-dialog t (list (match-string 0) (cons "Ok" t)))
-	    )
-	  )
-	)
-      )
-    (set-buffer l-buffer)
-    (when (string-match "finished" p-what) ;; carefull with blanks and newlines in p_what!
-      (revert-buffer t t) ;; get the version that was checked out from CM Synergy
-      ;; ----------
-      ;; evt. reset the directory-status immediately again: other files in
-      ;; the directory may be checked out for other tasks, thus it's better
-      ;; not to have the directory marked for check-out for *this* task (which
-      ;; is the default behaviour for personal work-areas)
-      ;; When the directory is not checked out, this will just give the
-      ;; message "Object '...' is already in the 'released' state.", no
-      ;; problem so we don't test for being checked out 1st!
-      ;; ----------
-      (when vc-rational-synergy-auto-check-in-directory-p
-	(let* 
-	    (
-	     (l-filename (vc-rational-synergy-platformify-path (buffer-file-name)))
-	     (l-dir (file-name-directory l-filename))
-	     (l-proc (start-process
-		      "vc-cmsyn"
-		      " *SYNERGY-AUTO-CHECK-IN*"
-		      vc-cmsyn-exe-name
-		      (format "ci -c \"Checked in automatically after co of %s by emacs/vc-cmsyn\" %s" l-filename l-dir)
-		      )
-		     )
-	     )
-	  )
-	)
-      )
-    (vc-cmsyn-sentinel p-process p-what) ;; cleanup, evt. remove C-m's
-    (message "Ready checking out file %s" (buffer-file-name l-buffer))
-    )
-  )
-
-(defun vc-cmsyn-sentinel-register-file (p-process p-what)
-  "Function running at the end of the ccm co process for a file, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       )
-    (set-buffer l-buffer)
-    (when (equal p-what "finished")
-      (find-file (buffer-name l-buffer)) ;; get the version that was checked out from CM Synergy
-      )
-    ;; ----------
-    ;; And ci this file now that it's registered
-    ;; ----------
-    (if vc-rational-synergy-register-checks-in-p
-	(vc-cmsyn-ci-file "1st Checkin after creation") ;; this also pops to output-buffer and checks status buffer
-      ;;       (vc-cmsyn-check-status-buffer) ==> via update-mode-line in (vc-cmsyn-sentinel)
-      (vc-cmsyn-sentinel p-process p-what) ;; cleanup, evt. remove C-m's
-      (message "%s is registered, but not checked in yet!" (buffer-file-name))
-      )
-    (message "Ready registering %s" (buffer-file-name l-buffer))
-    )
-  )
-
-(defun vc-cmsyn-sentinel-co-directory (p-process p-what)
-  "Function running at the end of the ccm co process for a directory, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       l-dir l-string
-       )
-    (set-buffer l-buffer)
-    ;; ----------
-    ;; check parallel versions for 1 of the files
-    ;; ----------
-    (save-excursion
-      (set-buffer l-output-buffer)
-      (goto-char (point-max))
-      (while (re-search-backward "Starting check out " vc-cmsyn-process-start-mark t))
-      (while (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	(setq l-string (format "%s; %s" l-string (match-string 0)))
-	)
-      (when (> (length l-string) 0) (x-popup-dialog t (list l-string (cons "Ok" t))))
-      )
-    (if (buffer-file-name)
-	(progn
-	  (setq l-dir (file-name-directory (buffer-file-name)))
-	  (vc-cmsyn-sentinel-co-file p-process p-what t)) ;; don't check parallel versions
-      (setq l-dir (if (consp dired-directory) (car dired-directory) dired-directory))
-      (revert-buffer) ;; just refresh, this is a directory
-      )
-    (vc-cmsyn-sentinel p-process p-what) ;; cleanup, evt. remove C-m's, mode-line refresh
-    (message "Ready checking out directory %s" l-dir)
-    )
-  )
-
-(defun vc-cmsyn-sentinel-ci-file (p-process p-what)
-  "Function running at the end of the ccm ci process for a file, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       )
-    ;; ----------
-    ;; check parallel versions
-    ;; ----------
-    (save-excursion
-      (set-buffer l-output-buffer)
-      (goto-char (point-max))
-      (when (re-search-backward "Starting check in of" vc-cmsyn-process-start-mark t)
-	(when (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	  (x-popup-dialog t (list (match-string 0) (cons "Ok" t)))
-	  )
-	)
-      )
-    (set-buffer l-buffer)
-    (revert-buffer t t)
-    (vc-cmsyn-sentinel p-process p-what)
-    (message "Ready checking in file %s" (buffer-file-name l-buffer))
-    )
-  )
-
-(defun vc-cmsyn-sentinel-undo-co-file (p-process p-what)
-  "Function running at the end of the ccm ci process for a file, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       )
-    (set-buffer l-buffer)
-    (revert-buffer t t) ;; Synergy has rolled back the file, make visible
-    (vc-cmsyn-sentinel p-process p-what)
-    (message "Ready undoing check out of  %s" (buffer-file-name l-buffer))
-    )
-  )
-
-(defun vc-cmsyn-sentinel-ci-directory (p-process p-what)
-  "Function running at the end of the ccm ci process for a directory, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       (l-string "")
-       )
-    ;; ----------
-    ;; check parallel versions for 1 of the files
-    ;; ----------
-    (save-excursion
-      (set-buffer l-output-buffer)
-      (goto-char (point-max))
-      (while (re-search-backward "Starting check in " vc-cmsyn-process-start-mark t))
-      (while (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	(setq l-string (format "%s; %s" l-string (match-string 0)))
-	)
-      (when (> (length l-string) 0) (x-popup-dialog t (list l-string (cons "Ok" t))))
-      )
-    (save-excursion
-      (set-buffer l-buffer)
-      (when (not (buffer-file-name))
-	(revert-buffer) ;; just refresh, this is a directory
-	)
-      )
-    (vc-cmsyn-check-status-buffers)
-    (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
-    (message "Ready checking in directory")
-    )
-  )
-
-(defun vc-cmsyn-sentinel-undo-co-directory (p-process p-what)
-  "Function running at the end of the ccm undo co process for a directory, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       (l-string "")
-       l-revert-buffer
-       )
-    ;; ----------
-    ;; find the revert-buffer, either the directory of the buffer where
-    ;; the command was called, or the buffer itself
-    ;; ----------
-    (save-excursion 
-      (set-buffer l-buffer)
-      (if (not (buffer-file-name))
-	  (setq l-revert-buffer l-buffer ) ;; just refresh, this is a directory
-	(setq l-revert-buffer (find-buffer-visiting (file-name-directory (buffer-file-name))))
-	)
-      (when l-revert-buffer
-	(save-excursion
-	  (set-buffer l-revert-buffer)
-	  (revert-buffer t t)
-	  )
-	)
-      )
-    (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
-    (message "Ready undoing check out of directory")
-    )
-  )
-
-(defun vc-cmsyn-sentinel-ci-task (p-process p-what) 
-  "Function running at the end of the ccm ci process for a task, called directly as sentinel, calls the general `vc-cmsyn-sentinel'.
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: the ccm process 
-                  P-WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (l-buffer (vc-cmsyn-get-buffer-mapped-to-proc p-process))
-       (l-output-buffer (process-buffer p-process))
-       (l-string "")
-       )
-    ;; ----------
-    ;; check parallel versions for 1 of the files
-    ;; ----------
-    (save-excursion
-      (set-buffer l-output-buffer)
-      (goto-char (point-max))
-      (while (re-search-backward "Starting check in " vc-cmsyn-process-start-mark t))
-      (while (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	(setq l-string (format "%s; %s" l-string (match-string 0)))
-	)
-      (when (> (length l-string) 0) (x-popup-dialog t (list l-string (cons "Ok" t))))
-      )
-    (save-excursion
-      (set-buffer l-buffer)
-      (when (not (buffer-file-name))
-	(revert-buffer) ;; just refresh, this is a directory
-	)
-      )
-    ;; ----------
-    ;; now update status of all vc-cmsyn-buffers!
-    ;; ----------
-    (vc-cmsyn-check-status-buffers)
-    (vc-cmsyn-clear-buffer-mapping-for-proc p-process)
-    (message "Ready checking in task")
-    )
-  )
-
-(defun vc-cmsyn-sentinel-history-graphics (p-process p-what)
-  "Function running when the ccm process for displaying graphical history information is done.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: ccm process
-                  P-WHAT: change in process
-  Returns       : "
-  (vc-cmsyn-sentinel p-process p-what t) ;; standard finish, but don't popup the process-buffer, would cover the graphics-history-output
-  )
-
-(defun vc-cmsyn-sentinel-start-developers-gui (p-process p-what)
-  "Function running when the ccm login process is done.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : P-PROCESS: ccm process
-                  P-WHAT: change in process
-  Returns       : "
-  (message "!! vc-cmsyn-sentinel-start-developers-gui 1")
-  (save-excursion
-    (let* 
-	(
-	 (l-string (vc-rational-synergy-command-to-string "status")) ;; find out ccm_addr cli
-	 (l-ccm-addr (progn (when (string-match  "^Command[ \t]+Interface[ \t]+@ \\(.*\\)[ \t]*\\((current session)\\)?[ \t]*$" l-string) (match-string 1 l-string))))
-	 l-string
-	 )
-      (message "!! 2")
-      (if l-ccm-addr (setenv "CCM_ADDR" l-ccm-addr) (error "Couldn't find Synergy Command Line Interface, connection failed!"))
-      ;; ----------
-      ;; retrieve task to work on, this can not be retrieved from the
-      ;; developers gui so far (FIXME as soon as fix available from Telelogic)
-      ;; ----------
-      (message "!! 3")
-      (vc-cmsyn-select-task-cli)
-      (message "!! 4")
-      )
-    )
-  (vc-cmsyn-sentinel p-process p-what) ;; standard finish
-  )
-
-(defun vc-cmsyn-check-status-buffers ()
-  "Check/reset status of all buffers in cmsyn mode, refreshes mode-lines.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : "
-  (save-excursion
-    (dolist (i-buffer (buffer-list))
-      (set-buffer i-buffer)
-      (when vc-cmsyn-mode
-	(vc-cmsyn-check-status-buffer)
-	(vc-cmsyn-update-modeline) ;; async process, checks status again afterwards
-	)
-      )
-    )
-  )
-
-(defun vc-cmsyn-check-status-buffer ()
-  "Checks writable/readonly compared with file-attribs.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : -"
-  (when (buffer-file-name)
-    (cond
-     ((and (file-writable-p (buffer-file-name)) buffer-read-only)
-      (toggle-read-only))
-     ((and (not (file-writable-p (buffer-file-name))) (not buffer-read-only))
-      (toggle-read-only))
-     ))
-  )
-
-(defun vc-cmsyn-dos2unix ()
- "Convert this entire buffer from MS-DOS text file format to UNIX."
- (interactive)
- (save-excursion
-   (goto-char (point-min))
-   (while (re-search-forward "\r$" nil t)
-     (replace-match "" nil nil))
-   (goto-char (1- (point-max)))
-   (if (looking-at "\C-z")
-       (delete-char 1))))
 
 
 
@@ -1198,7 +595,7 @@
   Returns       : -"
   (interactive)
   (vc-rational-synergy-check-session)
-  (vc-cmsyn-run-command "Calling select Task GUI..." "task -default -g" )
+  (vc-rational-synergy-run-command "Calling select Task GUI..." "task -default -g" )
   (when vc-rational-synergy-iconify-frame-when-ccm-gui (iconify-frame))
   (vc-rational-synergy-check-session-pause)
   )
@@ -1226,21 +623,26 @@
   )
 
 ;; Key Bindings
-(defvar vc-cmsyn-mode-map
+(defvar vc-rational-synergy-mode-map
   (make-sparse-keymap)
   "Map for the special keys in minor-mode vc-cmsyn-mode."
   )
-(define-key vc-cmsyn-mode-map (kbd "C-c C-m o") 'vc-cmsyn-co-file)
-(define-key vc-cmsyn-mode-map (kbd "C-c C-m u") 'vc-cmsyn-undo-co-file)
-(define-key vc-cmsyn-mode-map (kbd "C-c C-m i") 'vc-cmsyn-ci-file)
-(define-key vc-cmsyn-mode-map (kbd "C-c C-m h") 'vc-cmsyn-history-file-graphics)
-(define-key global-map (kbd "C-c C-m d") 'vc-cmsyn-show-default-task)
-(define-key global-map (kbd "C-c C-m t") 'vc-cmsyn-ci-task)
-(define-key global-map (kbd "C-c C-m s") 'vc-cmsyn-select-task)
-(define-key global-map (kbd "C-c C-m p") 'vc-cmsyn-properties)
-(define-key global-map (kbd "C-c C-m a") 'vc-cmsyn-about)
+
+(defun vc-rational-synergy--dk (&rest args)
+  "Defines keys into the IBM Rational Synergy mode map"
+  (apply 'define-key vc-rational-synergy-mode-map args))
+
+(vc-rational-synergy--dk (kbd "C-c C-m o") 'vc-rational-synergy-co-file)
+(vc-rational-synergy--dk (kbd "C-c C-m u") 'vc-rational-synergy-undo-co-file)
+(vc-rational-synergy--dk (kbd "C-c C-m i") 'vc-rational-synergy-ci-file)
+(vc-rational-synergy--dk (kbd "C-c C-m h") 'vc-rational-synergy-history-file-graphics)
+(vc-rational-synergy--dk (kbd "C-c C-m r") 'vc-rational-synergy-register-file)
+(define-key global-map (kbd "C-c C-m t") 'vc-rational-synergy-ci-task)
+(define-key global-map (kbd "C-c C-m s") 'vc-rational-synergy-select-task)
+(define-key global-map (kbd "C-c C-m p") 'vc-rational-synergy-properties)
+(define-key global-map (kbd "C-c C-m a") 'vc-rational-synergy-about)
 (define-key global-map (kbd "C-c C-m l") 'vc-rational-synergy-login) ;; login
-(define-key vc-cmsyn-mode-map (kbd "C-c C-m r") 'vc-cmsyn-register-file) ;; register
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1270,10 +672,10 @@ NB: called from within a hook, careful with errors!
 
 (define-minor-mode vc-cmsyn-mode
   "Minor-mode for files in a CM Synergy work-area"
-  nil " CMSyn" vc-cmsyn-mode-map
+  nil " CMSyn" vc-rational-synergy-mode-map
   (when vc-cmsyn-mode
     (vc-cmsyn-check-status-buffer) ;; also check here, update modeline goes async
-    (vc-cmsyn-update-modeline) ;; also updates status! FIX ME: when into VC this has to be removed!
+    (vc-rational-synergy-update-modeline) ;; also updates status! FIX ME: when into VC this has to be removed!
     )
   )
 
