@@ -62,16 +62,8 @@
 (require 'easymenu)
 (easy-menu-define menu-bar-vc-cmsyn-menu nil "IBM Rational Synergy menu"
   (list "IBM Rational Synergy"
-	["Login..." vc-cmsyn-start]
-	["Logout..." vc-cmsyn-stop]
-	(list "Auto-login-logout"
-	  ["Auto-login-logout?" (customize-set-variable 'vc-cmsyn-auto-login-logout (not vc-cmsyn-auto-login-logout))
-	  :style toggle
-	  :selected vc-cmsyn-auto-login-logout
-	  :help "toggles automatic logging in and out of IBM Rational Synergy"]
-	  ["Set task for auto-login-logout"  (customize-variable 'vc-cmsyn-auto-login-task)]
-	  ["Set auto-login-data" (customize-variable 'vc-cmsyn-auto-login-data)]
-	  )
+	["Login..." vc-rational-synergy-login]
+	["Logout..." vc-rational-synergy-logout]
 	"---"
 	["Show Default Task"			  vc-cmsyn-show-default-task   	    :keys "C-c RET d"]
 	["Show Task Files"			  vc-cmsyn-show-task-files]

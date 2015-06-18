@@ -1,3 +1,8 @@
+2015-06-18    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-authentication.el: Refactored the
+	authentication procedures entirely
+
 2015-06-17    <sjoerd.van.leent@realworld-systems.com>
 
 	* vc-cmsyn-install.el (vc-cmsyn-use-developers-gui-p): Removed

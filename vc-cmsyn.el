@@ -1430,7 +1430,7 @@
 (define-key global-map (kbd "C-c C-m s") 'vc-cmsyn-select-task)
 (define-key global-map (kbd "C-c C-m p") 'vc-cmsyn-properties)
 (define-key global-map (kbd "C-c C-m a") 'vc-cmsyn-about)
-(define-key global-map (kbd "C-c C-m l") 'vc-cmsyn-start) ;; login
+(define-key global-map (kbd "C-c C-m l") 'vc-rational-synergy-login) ;; login
 (define-key vc-cmsyn-mode-map (kbd "C-c C-m r") 'vc-cmsyn-register-file) ;; register
 
 					; Minor Mode
