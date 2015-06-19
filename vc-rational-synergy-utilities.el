@@ -68,6 +68,55 @@ without adding a drive prefix"
   "Checks if a given result string does not indicate a CCM error"
   (not vc-rational-synergy-result-error-p value))
 
+(defvar vc-rational-synergy--format-string-prefix "\\t>>>\\t"
+  "Prefix of the format string send towards IBM Rational Synergy")
+
+(defvar vc-rational-synergy--format-string-prefix-regexp "^\t>>>\t"
+  "Prefix of the format string send back from IBM Rational Synergy")
+
+
+;;;; I/O.
+
+(defun vc-rational-synergy--create-format-string (&rest names)
+  "Creates an understandable format string against IBM Rational Synergy
+The names are to be symbols or strings specifying the format
+names of a particular option.
+
+Names with hyphens are automatically replaced with names using 
+underscores"
+  (let* ((proper-names (mapcar (lambda (n)
+				 (cond 
+				  ((symbolp n) (symbol-name n))
+				  ((stringp n) n)
+				  (t (error "not a string or symbol: %s" n))))
+			       names))
+	 (underscored (mapcar (lambda (n) (sub n "-" "_")) proper-names))
+	 (body (mapconcat (lambda (n) (format "%%%s" n)) underscored "\\t")))
+    (format "%s%s" vc-rational-synergy--format-string-prefix body)))
+
+(defun vc-rational-synergy--parse-formatted-line (line)
+  "Parses a single line.
+If the line is valid to be parsed, returns a list containing the lines.
+If not, the result will be nil"
+
+  (when (stringp line)
+    (when (eq 0 (string-match vc-rational-synergy--format-string-prefix-regexp
+			      line))
+	(let ((body (substring line (match-end 0))))
+	  (split-string body "\t")))))
+	  
+		   
+
+(defun vc-rational-synergy--parse-formatted (lines)
+  "Parses back sequences within lines which are understood to be formatted"
+  (let* ((parsed-lines (mapcar 'vc-rational-synergy--parse-formatted-line
+			       lines))
+	 (non-nil (remove-if-not (lambda (x) (not (eq nil x))) parsed-lines)))
+    ;; In the rare case that the eventual list non-nil is empty,
+    ;; return nil
+    (if (eq 0 (length non-nil)) nil non-nil)))
+
+
 
 (defmacro with-vc-rational-synergy-comint-strip-ctrl-m (&rest program)
   "Sets the shell-string-ctrl-m function to comint-output-filter-functions
@@ -81,7 +130,18 @@ and reverts back to the original after running program"
 	 (setq comint-output-filter-functions old-output-filter-functions)))))
 	 
   
+;;;; User Interface.
 
+
+(defun vc-rational-synergy-message (format &rest format-string)
+  "Either uses a message-box or message to display information
+
+Based on `vc-rational-synergy-use-message-boxes' either use
+messages or message-boxes"
+
+  (if vc-rational-synergy-use-message-boxes
+      (apply 'message-box format format-string)
+    (message (apply 'format format format-string))))
 
 (provide 'vc-rational-synergy-utilities)
 

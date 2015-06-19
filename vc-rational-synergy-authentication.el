@@ -333,6 +333,71 @@ terminate the provisioner"
     (vc-rational-synergy--provision :explicit)))
 
 ;;;###autoload
+(defun vc-rational-synergy-logged-on-user ()
+  "If a user is logged on, display the user which has logged on"
+  (interactive)
+
+  (let* ((status (vc-rational-synergy-status))
+	 (user (when status (elt status 0))))
+    (message (if user
+		 (format "Currently logged on user: %s" user)
+	       "No user logged on currently"))
+    user))
+
+;;;###autoload
+(defun vc-rational-synergy-status ()
+  "If a user is logged on, extract the status.
+If called interactively, format the status such that it can be
+displayed in the minibuffer
+
+The returning status will be zero, or a vector of five values,
+which are in order:
+ 1) username
+ 2) database
+ 3) address"
+  (interactive)
+  
+  ;; Typically, a status results in a number of lines having the following
+  ;; Mark-up:
+  ;;
+  ;; Line 1 contains a header
+  ;; Line 2 is empty
+  ;; Line 3 Contains the actual data
+  ;; Line 4 Contains indication of project
+
+  ;; The column specification is
+  ;; 1) The user logged in
+  ;; 2) The database connected to
+  ;; 3) The session address
+  ;; 4) The session type (is always CLI type)
+  ;; 5) Whether or not there is a current session
+
+  (let (actual-result
+	(report "No session bound to Emacs")
+	(interactively (called-interactively-p 'interactive)))
+
+    ;; Only execute when provisioning, otherwise,
+    (when vc-rational-synergy--current-provisioner
+      (let ((result (vc-rational-synergy-command-w/format-to-list
+		     '("status" "-cli")
+		     'username 'database 'address 'session 'current-session)))
+	(when (<= 1 (length result))
+	  (dolist (r result)
+	    (when (string= "TRUE" (nth 4 r))
+	      (setq actual-result
+		    (vector (nth 0 r)
+			    (nth 1 r)
+			    (nth 2 r)))))
+	  (when interactively
+	    (setq report (format "You are %s, on database [%s], on address [%s]"
+				 (elt actual-result 0)
+				 (elt actual-result 1)
+				 (elt actual-result 2)))))))
+    (when interactively (message report))
+    actual-result))
+    
+
+;;;###autoload
 (defmacro with-vc-rational-synergy (&rest program)
   "Checks session existence and maintain the session
 This will call `vc-rational-synergy-check-session', protect the program and on

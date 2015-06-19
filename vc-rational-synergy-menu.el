@@ -85,67 +85,69 @@
 ;;;; Menu definition.
 
 
-(let ((dir-mode-check '(or (equal major-mode 'dired-mode) vc-cmsyn-mode ))
-      (p (lambda (i) (make-symbol (concat "vc-rational-synergy-" (symbol-name i))))))
+(let ((dir-mode-check '(or (equal major-mode 'dired-mode) vc-cmsyn-mode )))
   (easy-menu-define menu-bar-vc-rational-synergy-menu nil "IBM Rational Synergy menu"
 
     `("IBM Rational Synergy"
    
-      ["Login..."           ,(apply p '(login))]
-      ["Logout..."          ,(apply p '(logout))]
+      ["Login..."           vc-rational-synergy-login]
+      ["Logout..."          vc-rational-synergy-logout]
+      ["Current user"       vc-rational-synergy-logged-on-user]
+      ["Status"             vc-rational-synergy-status]
       "---"
       
-      ["Show Default Task"  ,(apply p '(show-default-task)) :keys "C-c RET d"]
-      ["Show Task Files"    ,(apply p '(show-task-files))]
-      ["Open Task Files"    ,(apply p '(open-task-files))]
-      ["Select Task"	    ,(apply p '(select-task))       :keys "C-c RET s"]
-      ["Check In Task"	    ,(apply p '(ci-task))           :keys "C-c RET t"]
+      ["Show Default Task"  vc-rational-synergy-default-task      :keys "C-c RET d"]
+      ["Show Task Files"    vc-rational-synergy-show-task-files]
+      ["Open Task Files"    vc-rational-synergy-open-task-files]
+      ["Select Task"	    vc-rational-synergy-select-task       :keys "C-c RET s"]
+      ["Check In Task"	    vc-rational-synergy-ci-task           :keys "C-c RET t"]
 
-      ;; ["Create New Task" ,(apply p '(create-task]
+      ;; ["Create New Task" vc-rational-synergy-create-task]
       "---"
       
+      ("Buffer"
+       ["Show project"      vc-rational-synergy-current-project])
+
       ("File"
 	
-       ["Checkout"      ,(apply p '(co-file))        :active ,vc-cmsyn-mode
+       ["Checkout"      vc-rational-synergy-co-file        :active ,vc-cmsyn-mode
                                                      :keys "C-c RET o"]
-       ["Undo Checkout" ,(apply p '(undo-co-file))   :active vc-cmsyn-mode
+       ["Undo Checkout" vc-rational-synergy-undo-co-file   :active vc-cmsyn-mode
                                                      :keys "C-c RET u"]
-       ["Checkin"       ,(apply p '(ci-file))        :active vc-cmsyn-mode
+       ["Checkin"       vc-rational-synergy-ci-file        :active vc-cmsyn-mode
                                                      :keys "C-c RET i"]
-       ["Register"      ,(apply p '(register-file))  :active vc-cmsyn-mode
+       ["Register"      vc-rational-synergy-register-file  :active vc-cmsyn-mode
 	                                             :keys "C-c RET r"])
       ("Directories"
-       ["Checkout"	 ,(apply p '(co-directory))     :active ,dir-mode-check]
-       ["Undo Checkout" ,(apply p '(undo-co-directory)) :active ,dir-mode-check]
-       ["Register"      ,(apply p '(create-directory))  :active ,dir-mode-check]
+       ["Checkout"	 vc-rational-synergy-co-directory     :active ,dir-mode-check]
+       ["Undo Checkout" vc-rational-synergy-undo-co-directory :active ,dir-mode-check]
+       ["Register"      vc-rational-synergy-create-directory  :active ,dir-mode-check]
 	;; TODO: Should really be enabled
-	;;["Check In"    ,(apply p '(ci-directory))   :active ,dir-mode-check]
+	;;["Check In"    vc-rational-synergy-ci-directory   :active ,dir-mode-check]
 	)
-      "---"
       
-      
-      ["Update Modeline" ,(apply p '(update-modeline))]
+      ["Update Modeline" vc-rational-synergy-update-modeline]
       "---"
 
-      ["Show Properties" ,(apply p '(properties))     :active vc-cmsyn-mode
+      ["Show Properties" vc-rational-synergy-properties     :active vc-cmsyn-mode
                                                       :keys "C-c RET p"]
 
       ("History"
-       ["File (graphics)" ,(apply p '(history-file-graphics)) :active vc-cmsyn-mode
+       ["File (graphics)" vc-rational-synergy-history-file-graphics :active vc-cmsyn-mode
 	                                                      :keys "C-c RET h"]
-       ["File (details)"       ,(apply p '(history-file-details))  :active vc-cmsyn-mode ]
-       ["Directory (graphics)" ,(apply p '(history-directory-graphics)) :active ,dir-mode-check]
-       ["Directory (details)"  ,(apply p '(history-directory-details))  :active ,dir-mode-check])
+       ["File (details)"       vc-rational-synergy-history-file-details  :active vc-cmsyn-mode ]
+       ["Directory (graphics)" vc-rational-synergy-history-directory-graphics :active ,dir-mode-check]
+       ["Directory (details)"  vc-rational-synergy-history-directory-details  :active ,dir-mode-check])
 
       ("Compare"
-       ["With Previous Version" ,(apply p '(ediff))               :active vc-cmsyn-mode ]
-       ["With Other Version"    ,(apply p '(ediff-other-version)) :active vc-cmsyn-mode ]
-       ["Versions"              ,(apply p '(ediff-versions))      :active vc-cmsyn-mode ])
+       ["With Previous Version" vc-rational-synergy-ediff               :active vc-cmsyn-mode ]
+       ["With Other Version"    vc-rational-synergy-ediff-other-version :active vc-cmsyn-mode ]
+       ["Versions"              vc-rational-synergy-ediff-versions      :active vc-cmsyn-mode ])
       "---" 
 
       ["Customize..."		 (customize-group 'vc-rational-synergy)]
-      ["Info..."		,(apply p '(info))]
-      ["About..."               ,(apply p '(about))])))
+      ["Info..."		vc-rational-synergy-info]
+      ["About..."               vc-rational-synergy-about])))
 
 
 

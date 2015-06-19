@@ -58,6 +58,13 @@
   :type 'boolean
   :group 'vc-rational-synergy)
 
+(defcustom vc-rational-synergy-use-message-boxes
+  nil
+  "Uses message boxes for messages instead of the minibuffer where available"
+  :tag "Uses message boxes for messages instead of the minibuffer where available"
+  :type 'boolean
+  :group 'vc-rational-synergy)
+
 (provide 'vc-rational-synergy-user-customization)
 
 ;;; vc-rational-synergy-user-customization ends here

@@ -54,21 +54,15 @@
 (defun vc-rational-synergy--update-modeline-version (version)
   "Displays the actual version information in the modeline"
   
-  ;; Split the answer at : if there is no error-message
-  ;; there may be text before the answer: chop off, the answer is a line
-  ;; of its own, the last
-  (save-match-data
-    (let* (
-	   (expression "\\(.*\n\\)*\\([^@\n]+\\)@@\\([^@\n]+\\)\n")
-	   (ccm-version (if (and 
-			     (string-match expression version)
-			     (vc-rational-synergy-result-okay-p version))
-			    (format "%s:%s" (match-string 2 l-string)
-				    (match-string 3 l-string))
-			  "CMSynergyVersion??"))
-	   (writable-string (if buffer-read-only "-" ":")))
-      (vc-rational-synergy-int-update-modeline 
-       (format "%s%s%s" filename writable-string ccm-version)))))
+  ;; Update the mode-line with the version appended to it. The version
+  ;; is a compound of two parts of the list, the 'version and 'status
+  ;; sections.
+
+  (vc-rational-synergy-int-update-modeline
+   (apply 'format 
+	  "%s [%s:%s]"
+	   (file-name-nondirectory (buffer-file-name))
+	   version)))
 
 ;;;###autoload
 (defun vc-rational-synergy-update-modeline ()
@@ -76,16 +70,15 @@
   (interactive)
 
   (with-vc-rational-synergy
-   (when (buffer-file-name) ;; only if we are in a file there is version-information to display
-     (let* ((filename (file-name-nondirectory (buffer-file-name))))
-
-       (with-vc-rational-synergy-comint-strip-ctrl-m
-	(let ((version (vc-rational-synergy-command-to-string 
-			`("ls" "-f" "\"%%version@@%%status\" %s" 
-			  ,(vc-rational-synergy-platformify-path (buffer-file-name))))))
-
-	  (when version
-	    vc-rational-synergy--update-modeline-version version)))))))
+   ;; only if we are in a file there is version-information to display
+   (when (buffer-file-name)
+     (with-vc-rational-synergy-comint-strip-ctrl-m
+      (let ((version (vc-rational-synergy-command-w/format-to-list
+		      `("ls" ,(vc-rational-synergy-platformify-path
+			       (buffer-file-name)))
+		      'version 'status)))
+	(when version
+	  (vc-rational-synergy--update-modeline-version (car version))))))))
 
 (provide 'vc-rational-synergy-modeline)
 
