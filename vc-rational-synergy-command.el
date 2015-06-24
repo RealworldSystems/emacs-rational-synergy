@@ -81,8 +81,8 @@ set if CHECK-TASk-SET is non-nil."
   ;; check task set, if applicable. It only applicable if option
   ;; vc-rational-synergy-check-default-task-set-p is set
   (when (and vc-rational-synergy-check-default-task-set-p check-task-set)
-    (vc-cmsyn-check-task-set t))
-  
+    (unless (vc-rational-synergy-get-default-task)
+      (error "No default task set!!")))
 
   ;; Initialize defaults
   (unless sentinel (setq sentinel 'vc-rational-synergy-sentinel))

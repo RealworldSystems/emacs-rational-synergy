@@ -58,6 +58,15 @@
   ;; is a compound of two parts of the list, the 'version and 'status
   ;; sections.
 
+  (unless (boundp 'vc-rational-synergy-buffer-version)
+    (make-local-variable 'vc-rational-synergy-buffer-version))
+
+  (unless (boundp 'vc-rational-synergy-buffer-status)
+    (make-local-variable 'vc-rational-synergy-buffer-status))
+
+  (setq vc-rational-synergy-buffer-version (string-to-int (car version)))
+  (setq vc-rational-synergy-buffer-status (car (cdr version)))
+
   (vc-rational-synergy-int-update-modeline
    (apply 'format 
 	  "%s [%s:%s]"

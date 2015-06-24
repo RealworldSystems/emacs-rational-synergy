@@ -67,6 +67,28 @@
   "Enter Rational Synergy password"
   "Input of password")
 
+;;;; Files.
+
+(defconst vc-rational-synergy-int-file-name
+  "File Name"
+  "The file name")
+
+(defconst vc-rational-synergy-int-type
+  "File Type"
+  "The file type")
+
+(defconst vc-rational-synergy-int-rev
+  "File version"
+  "The revision of a file")
+
+(defconst vc-rational-synergy-int-instance
+  "File instance"
+  "The instance number of a file")
+
+(defconst vc-rational-synergy-int-status
+  "Status"
+  "The status of an object")
+
 
 (provide 'vc-rational-synergy-constants)
 

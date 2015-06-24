@@ -55,6 +55,45 @@
 	 (message "No project has been defined here")
 	 nil)))))
 
+(defun vc-rational-synergy--project-raw (project)
+  "Returns the name of a project in raw format"
+  (when project
+    (concat (elt project 0)
+	    vc-rational-synergy-version-object-separator
+	    (elt project 1))))
+
+(defun vc-rational-synergy--command-wa-path-for-project (project)
+  "Returns the work area path for a project"
+  (let* ((raw (vc-rational-synergy--project-raw project))
+	 (result (vc-rational-synergy-command-w/format-to-list
+		  `("wa" "-s" "-p" ,raw)
+		  'wa-path)))
+    (when result
+      (car (car result)))))
+    
+;;;###autoload
+(defun vc-rational-synergy-project-work-area-root ()
+  "Retrieves the root path of the work area for the project"
+  (interactive)
+  (when (vc-rational-synergy--check-buffer-assoc)
+    (with-vc-rational-synergy
+     (let ((work-area (vc-rational-synergy--command-wa-path-for-project
+		       (vc-rational-synergy-current-project))))
+       (when (called-interactively-p 'interactive)
+	 (if work-area
+	     (vc-rational-synergy-message "%s" work-area)
+	   (vc-rational-synergy-message "%s" "No work area found"))
+	 work-area)))))
+
+;;;###autoload
+(defun vc-rational-synergy--command-paths (project)
+  "Retrieves the files inside the project"
+  (let* ((raw (vc-rational-synergy--project-raw project)))
+    (vc-rational-synergy-command-w/format-to-list
+     `("dir" "-s" "-p" ,raw)
+     'objectname 'path)))
+  
+
 
 (provide 'vc-rational-synergy-project)
 

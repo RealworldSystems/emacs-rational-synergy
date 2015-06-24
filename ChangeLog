@@ -1,3 +1,10 @@
+2015-06-24    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-task.el (vc-rational-synergy-show-task-files):
+	Quite radically changed the way task files are introspected, also
+	affects `vc-rational-synergy-open-task-files', now does not do any
+	screen scraping anymore.
+
 2015-06-18    <sjoerd.van.leent@realworld-systems.com>
 
 	* vc-rational-synergy-authentication.el: Refactored the
