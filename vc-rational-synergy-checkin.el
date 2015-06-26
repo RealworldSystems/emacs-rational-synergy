@@ -1,4 +1,4 @@
-;;; vc-rational-synergy-base.el --- IBM Rational Synergy checkin commands
+;;; vc-rational-synergy-checkin.el --- IBM Rational Synergy checkin commands
  
 ;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
 ;; Copyright (C) 2003 Realworld Systems
@@ -227,3 +227,6 @@ If COMMENT is set, checking the file with given comment"
      (if (vc-rational-synergy--command-ci (buffer-file-name) comment)
 	 (vc-rational-synergy-message "Succesfully checked in %s"
 				      (buffer-file-name))))))
+
+(provide 'vc-rational-synergy-checkin)
+;;; vc-rational-synergy-checkin.el ends here
