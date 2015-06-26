@@ -61,6 +61,67 @@ t will be returned"
 		       nil))
       (t t)))))
 
+
+(defun vc-rational-synergy-buffer-file-status (&optional buffer-or-name)
+  "Checks the file status of the selected buffer.
+if BUFFER-OR-NAME is set, uses that buffer, otherwise uses the
+current buffer."
+  (interactive)
+
+  (unless buffer-or-name (setq buffer-or-name (current-buffer)))
+
+  (with-current-buffer buffer-or-name
+    (unless (buffer-file-name)
+      (error (format "%s: %s" "This buffer does not have a file associated"
+		     (buffer-name (current-buffer)))))
+    (let ((st (with-vc-rational-synergy
+	       (vc-rational-synergy--command-file-status (buffer-file-name)))))
+      (unless st
+	(error (format "%s: %s" "No valid status found for"
+		       (buffer-file-name))))
+      (when (called-interactively-p 'interactive)
+	(vc-rational-synergy-message
+	 "File [%s] for buffer [%s] has status [%s]"
+	 (buffer-file-name) (buffer-name (current-buffer)) st))
+      st)))
+
+(defun vc-rational-synergy-buffer-working (&optional buffer-or-name)
+  "Checks if the buffer has a working file status"
+  (string= "working"
+	   (vc-rational-synergy-buffer-file-status buffer-or-name)))
+
+(defun vc-rational-synergy-buffer-integrate (&optional buffer-or-name)
+  "Checks if the buffer has an integrate file status"
+  (string= "integrate"
+	   (vc-rational-synergy-buffer-file-status buffer-or-name)))
+
+
+(defun vc-rational-synergy--synergized-buffers ()
+  "Returns all buffers part of the default task." 
+    (let* ((files (vc-rational-synergy--working-task-files)))
+      (delq nil
+	    (mapcar (lambda (b)
+		      (with-current-buffer b
+			(when (and (buffer-file-name)
+				   (member (buffer-file-name) files))
+			  b)))
+		    (buffer-list)))))
+
+(defun vc-rational-synergy--revert-working-buffers ()
+  "Checks if the default task associates unsaved buffers."
+  (mapcar (lambda (b) (revert-buffer nil t))
+	  (vc-rational-synergy--synergized-buffers)))
+
+
+(defun vc-rational-synergy--buffers-modified-p ()
+  "Checks if the default task associates unsaved buffers."
+  (catch 'exit
+    (let* ((synergized (vc-rational-synergy--synergized-buffers))
+      (dolist (buffer synergized)
+	(with-current-buffer buffer
+	  (when (buffer-modified-p) (throw 'exit t))))))))
+
+
 (defun vc-rational-synergy-buffer ()
   "Return the output-buffer for the ccm process.
 If the buffer does not exist yet, create it within the current frame"

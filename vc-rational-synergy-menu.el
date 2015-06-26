@@ -110,7 +110,7 @@
 
       ("File"
 	
-       ["Checkout"      vc-rational-synergy-co-file        :active ,vc-cmsyn-mode
+       ["Checkout"      vc-rational-synergy-co-file        :active vc-cmsyn-mode
                                                      :keys "C-c RET o"]
        ["Undo Checkout" vc-rational-synergy-undo-co-file   :active vc-cmsyn-mode
                                                      :keys "C-c RET u"]

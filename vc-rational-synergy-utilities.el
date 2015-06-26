@@ -139,9 +139,9 @@ and reverts back to the original after running program"
 Based on `vc-rational-synergy-use-message-boxes' either use
 messages or message-boxes"
 
-  (if vc-rational-synergy-use-message-boxes
-      (apply 'message-box format format-string)
-    (message (apply 'format format format-string))))
+  (when vc-rational-synergy-use-message-boxes
+    (apply 'message-box format format-string))
+  (message (apply 'format format format-string)))
 
 (provide 'vc-rational-synergy-utilities)
 

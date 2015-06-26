@@ -40,38 +40,11 @@
 (require 'vc-rational-synergy-project)
 (require 'vc-rational-synergy-task)
 (require 'vc-rational-synergy-checkin)
+(require 'vc-rational-synergy-checkout)
 
 (require 'vc-rational-synergy-administration-customization)
 (require 'vc-rational-synergy-user-customization)
 
-
-;;;###autoload
-(defun vc-cmsyn-co-file ()
-  "Check out a file from CM Synergy.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : checks task set before trying to check-out
-  Author        : Realworld Systems (GR)."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  ;; ----------
-  ;; Don't proceed when modified
-  ;; ----------
-  (when (buffer-modified-p) (error "This buffer is modified, please revert or save first."))
-  ;; ----------
-  ;; ok, proceed
-  ;; ----------
-  (let*
-      (
-       (l-filename (buffer-file-name))
-       (l-message (format "Starting check out of %s..." l-filename))
-       l-proc
-       )
-    (vc-rational-synergy-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-file nil t)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
 
 ;;;###autoload
 (defun vc-cmsyn-co-directory ()
@@ -100,6 +73,7 @@
     )
   (vc-rational-synergy-check-session-pause)
   )
+
 
 ;;;###autoload
 (defun vc-cmsyn-undo-co-file ()

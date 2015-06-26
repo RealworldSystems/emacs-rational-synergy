@@ -1,5 +1,10 @@
 2015-06-26    <sjoerd.van.leent@realworld-systems.com>
 
+	* vc-rational-synergy-checkout.el (vc-rational-synergy-co-file):
+	Modified one check-out routine of a file, directory still to do
+
+2015-06-26    <sjoerd.van.leent@realworld-systems.com>
+
 	* vc-rational-synergy-sentinels.el: Removed obsolete sentinels
 
 2015-06-26    <sjoerd.van.leent@realworld-systems.com>
