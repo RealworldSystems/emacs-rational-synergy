@@ -216,7 +216,7 @@ hides the ccm output-buffer."
       (goto-char (point-max))
       (when (re-search-backward "Starting check in of" vc-rational-synergy-process-start-mark t)
 	(when (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	  (x-popup-dialog t (list (match-string 0) (cons "Ok" t)))
+	  (vc-rational-synergy-message (match-string 0))
 	  )
 	)
       )

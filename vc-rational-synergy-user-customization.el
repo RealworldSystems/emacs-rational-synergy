@@ -65,6 +65,14 @@
   :type 'boolean
   :group 'vc-rational-synergy)
 
+(defcustom vc-rational-synergy-disallow-empty-comment
+  nil
+  "If empty comments are disallowed, simply do not checkin without it"
+  :tag "If empty comments are disallowed, simply do not checkin without it"
+  :type 'boolean
+  :group 'vc-rational-synergy)
+
+
 (provide 'vc-rational-synergy-user-customization)
 
 ;;; vc-rational-synergy-user-customization ends here

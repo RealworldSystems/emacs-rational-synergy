@@ -36,6 +36,31 @@
 
 (require 'vc-rational-synergy-modeline)
 
+(defun vc-rational-synergy--check-buffer-assoc ()
+  "Checks if the given buffer is associated to a user or project.
+Only if a buffer is properly associated, task operations can be performed.
+
+If there is no valid association, a message will be displayed using
+`vc-rational-synergy-message' and nil will be returned, otherwise,
+t will be returned"
+  (with-vc-rational-synergy
+   (let ((user (vc-rational-synergy-logged-on-user))
+	 (project (vc-rational-synergy-current-project)))
+
+     (message (format "Currently logged on user %s, project %s" user project))
+     
+     ;; A task can not be selected if there is no project or no user
+     (cond
+      ((not user) (progn
+		    (vc-rational-synergy-message
+		     "Can not select task, no user available")
+		    nil))
+      ((not project) (progn
+		       (vc-rational-synergy-message 
+			"This buffer has no project associated")
+		       nil))
+      (t t)))))
+
 (defun vc-rational-synergy-buffer ()
   "Return the output-buffer for the ccm process.
 If the buffer does not exist yet, create it within the current frame"

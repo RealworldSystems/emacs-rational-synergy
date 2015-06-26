@@ -55,15 +55,14 @@ This is a wrapper around `vc-rational-synergy-command-to-string'"
 This is a wrapper around `vc-rational-synergy-command-to-string'
 to be able to get a default task directly from the command"
   (condition-case err
-      (progn
-	(let* ((raw-task (vc-rational-synergy-command-to-string '("task" "-default")))
-	       ;; The task id is found as the first numeric section of
-	       ;; raw-task
-	       (task-id (string-to-number raw-task))
-	       (result (vc-rational-synergy-command-w/format-to-list
-			`("task" "-show" "i" ,(format "%s" task-id))
-			'task-number 'task-description 'task-synopsis)))
-	  (when result (car result))))
+      (let* ((raw-task (vc-rational-synergy-command-to-string '("task" "-default")))
+	     ;; The task id is found as the first numeric section of
+	     ;; raw-task
+	     (task-id (string-to-number raw-task))
+	     (result (vc-rational-synergy-command-w/format-to-list
+		      `("task" "-show" "i" ,(format "%s" task-id))
+		      'task-number 'task-description 'task-synopsis)))
+	(when result (car result)))
       (error nil)))
 	
 	
@@ -152,32 +151,6 @@ INSTANCE identification."
       (vc-rational-synergy-command-to-string `("task" "-default" ,selected-task-id))
       (vc-rational-synergy-message "Task set to %s!" selected-task-id))))
   
-
-(defun vc-rational-synergy--check-buffer-assoc ()
-  "Checks if the given buffer is associated to a user or project.
-Only if a buffer is properly associated, task operations can be performed.
-
-If there is no valid association, a message will be displayed using
-`vc-rational-synergy-message' and nil will be returned, otherwise,
-t will be returned"
-  (with-vc-rational-synergy
-   (let ((user (vc-rational-synergy-logged-on-user))
-	 (project (vc-rational-synergy-current-project)))
-
-     (message (format "Currently logged on user %s, project %s" user project))
-     
-     ;; A task can not be selected if there is no project or no user
-     (cond
-      ((not user) (progn
-		    (vc-rational-synergy-message
-		     "Can not select task, no user available")
-		    nil))
-      ((not project) (progn
-		       (vc-rational-synergy-message 
-			"This buffer has no project associated")
-		       nil))
-      (t t)))))
-   
 
 ;;;###autoload
 (defun vc-rational-synergy-select-task ()
@@ -332,7 +305,17 @@ otherwise displays a message that no task files have been associated"
 			  (vc-rational-synergy-current-project))))
 	     (vc-rational-synergy--cross-assoc-task-files-paths 
 	      task-files paths)))))))
-		    
+
+(defun vc-rational-synergy--get-task-files-for-default-task-w/status (status)
+  "Acquires the files for the default task, with a particular status."
+  (let ((task-files (vc-rational-synergy--get-task-files-for-default-task)))
+    (delq nil
+	  (mapcar (lambda (tf)
+		    (when (string= status 
+				   (vc-rational-synergy-task-file-status tf))
+		      tf))
+		  task-files))))
+
 
  
 ;;;###autoload

@@ -1,3 +1,13 @@
+2015-06-26    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-checkin.el: Added this file as replacement for
+	the check-in routines in `vc-rational-synergy-checkin.el'
+
+2015-06-26    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-task.el (vc-rational-synergy-command-default-task):
+	Do not require progn, as there is a let form already
+
 2015-06-24    <sjoerd.van.leent@realworld-systems.com>
 
 	* vc-rational-synergy-task.el (vc-rational-synergy-show-task-files):

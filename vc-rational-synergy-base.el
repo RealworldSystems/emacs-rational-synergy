@@ -39,6 +39,7 @@
 (require 'vc-rational-synergy-modeline)
 (require 'vc-rational-synergy-project)
 (require 'vc-rational-synergy-task)
+(require 'vc-rational-synergy-checkin)
 
 (require 'vc-rational-synergy-administration-customization)
 (require 'vc-rational-synergy-user-customization)
@@ -238,70 +239,6 @@
   (vc-rational-synergy-check-session-pause)
   )
 
-;;;###autoload
-(defun vc-cmsyn-ci-file (&optional p-comment-string p-dont-check-task)
-  "Check in a file into CM Synergy.
-  Date          : Apr/2003
-  Parameters    : optional P-COMMENT-STRING: comment-string for check-in, so no query will be performed for it.
-  Returns       : 
-  Methodology   : checks task set before trying to check-in
-  Author        : Realworld Systems (GR)."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (when (buffer-modified-p)
-    (if (y-or-n-p "Buffer is modified, save buffer first?")
-	(save-buffer)
-      (message "Current buffer is modified, if you kill the buffer after checkin your changes will be lost!")
-      (run-with-timer 3 nil 'message "")
-      )
-    )
-  (vc-rational-synergy-check-session)
-  (let*
-      (
-       (l-filename  (buffer-file-name))
-       (l-comment   (or p-comment-string (read-string "Checkin-comment (newlines with S-ret, RET when done): ")))
-       (l-message   (format "Starting check in of %s..." l-filename))
-       (l-command   (if (zerop (length l-comment))
-			(format "ci -nc %s" (vc-rational-synergy-platformify-path l-filename))
-		      (format "ci -c \"%s\" %s" l-comment (vc-rational-synergy-platformify-path l-filename))))
-       l-proc
-       )
-    (vc-rational-synergy-run-command l-message l-command  'vc-cmsyn-sentinel-ci-file nil (not p-dont-check-task))
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
-
-;;;###autoload
-(defun vc-cmsyn-ci-directory ()
-  "Directory checkin to CM Synergy.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (when (buffer-modified-p)
-    (if (y-or-n-p "Buffer is modified, save buffer first?")
-	(save-buffer)
-      (message "Current buffer is modified, if you kill the buffer after checkin your changes will be lost!")
-      (run-with-timer 3 nil 'message "")
-      )
-    )
-  (let*
-      (
-       (l-filename (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
-       (l-comment (read-string "Checkin-comment (newlines with S-ret, RET when done): "))
-       (l-message (format "Starting Check in of %s..." l-filename))
-       (l-command   (if (zerop (length l-comment))
-			(format "ci -nc %s" (vc-rational-synergy-platformify-path l-filename))
-		      (format "ci -c \"%s\" %s" l-comment (vc-rational-synergy-platformify-path l-filename))))
-       l-proc
-       )
-    (vc-rational-synergy-run-command l-message l-command 'vc-cmsyn-sentinel-ci-directory nil t)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
 
 ;;;###autoload
 (defun vc-cmsyn-history-file-graphics ()
@@ -375,24 +312,6 @@
   (vc-rational-synergy-check-session-pause)
   )
 
-;;;###autoload
-(defun vc-cmsyn-ci-task ()
-  "Checks in the default task.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : "
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let* 
-      ((l-message "Starting check in Task...")
-       (l-comment (read-string "Checkin-comment (newlines with S-RET, RET when done): " ))
-       l-proc
-       )
-    (vc-rational-synergy-run-command l-message (format "task -checkin default -comment \"%s\"" l-comment) 'vc-cmsyn-sentinel-ci-task nil t)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
 
 
 ;;;###autoload
@@ -404,19 +323,6 @@
 	 (l-prop-command (format "prop %s" (vc-rational-synergy-platformify-path l-filename))))
 ;;     (vc-cmsyn-show-buffer)
     (vc-rational-synergy-run-command "Properties..." l-prop-command))
-  (vc-rational-synergy-check-session-pause)
-  )
-
-(defun vc-cmsyn-create-task ()
-  "Create a new task"
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (vc-rational-synergy-report "Starting create Task...")
-  (let*
-      (
-       (l-proc (start-process vc-rational-synergy-binary-name (vc-rational-synergy-buffer)
-					    vc-rational-synergy-binary-name "create_task" "-g")))
-    )
   (vc-rational-synergy-check-session-pause)
   )
 

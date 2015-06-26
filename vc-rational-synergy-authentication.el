@@ -397,6 +397,9 @@ which are in order:
     actual-result))
     
 
+;; Counter for entrances into with-vc-rational-synergy
+(defvar vc-rational-synergy--intern 0)
+
 ;;;###autoload
 (defmacro with-vc-rational-synergy (&rest program)
   "Checks session existence and maintain the session
@@ -406,19 +409,26 @@ local or non-local exit (errors, etc.) run
 
 Called like this:
 
-(with-vc-rational-synergy
+ (with-vc-rational-synergy
   ...)
 
-Expands to:
+Expands to something like below, but does recursion checking, such that
+vc-rational-synergy-check-session is not called dual, and
+vc-rational-synergy-check-session-pause is not called prematurely:
 
-(progn (vc-rational-synergy-check-session)
+ (progn (vc-rational-synergy-check-session)
        (unwind-protect
 	   ...
-	 (vc-rational-synergy-check-session)))"
-  `(progn (vc-rational-synergy-check-session)
+	 (vc-rational-synergy-check-session-pause)))"
+  `(progn (when (eq 0 vc-rational-synergy--intern)
+	    (vc-rational-synergy-check-session))
+	  (setq vc-rational-synergy--intern (+ vc-rational-synergy--intern 1))
 	  (unwind-protect
 	      ,(cons 'progn program)
-	    (vc-rational-synergy-check-session-pause))))
+	    (progn
+	      (setq vc-rational-synergy--intern (- vc-rational-synergy--intern 1))
+	      (when (eq 0 vc-rational-synergy--intern)
+		(vc-rational-synergy-check-session-pause))))))
 
 
 (provide 'vc-rational-synergy-authentication)
