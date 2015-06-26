@@ -1,5 +1,9 @@
 2015-06-26    <sjoerd.van.leent@realworld-systems.com>
 
+	* vc-rational-synergy-sentinels.el: Removed obsolete sentinels
+
+2015-06-26    <sjoerd.van.leent@realworld-systems.com>
+
 	* vc-rational-synergy-checkin.el: Added this file as replacement for
 	the check-in routines in `vc-rational-synergy-checkin.el'
 

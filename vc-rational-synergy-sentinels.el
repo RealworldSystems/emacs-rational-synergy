@@ -195,38 +195,6 @@ hides the ccm output-buffer."
     )
   )
 
-(defun vc-rational-synergy-sentinel-ci-file (process what)
-  "Function running at the end of the ccm ci process for a file, called directly as sentinel, calls the general `vc-rational-synergy-sentinel'.
-  Date          : Apr/2003
-  Parameters    : PROCESS: the ccm process 
-                  WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (buffer (vc-cmsyn-get-buffer-mapped-to-proc process))
-       (output-buffer (process-buffer process))
-       )
-    ;; ----------
-    ;; check parallel versions
-    ;; ----------
-    (save-excursion
-      (set-buffer output-buffer)
-      (goto-char (point-max))
-      (when (re-search-backward "Starting check in of" vc-rational-synergy-process-start-mark t)
-	(when (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	  (vc-rational-synergy-message (match-string 0))
-	  )
-	)
-      )
-    (set-buffer buffer)
-    (revert-buffer t t)
-    (vc-rational-synergy-sentinel process what)
-    (message "Ready checking in file %s" (buffer-file-name buffer))
-    )
-  )
-
 (defun vc-rational-synergy-sentinel-undo-co-file (process what)
   "Function running at the end of the ccm ci process for a file, called directly as sentinel, calls the general `vc-rational-synergy-sentinel'.
   Date          : Apr/2003
@@ -247,43 +215,6 @@ hides the ccm output-buffer."
     )
   )
 
-(defun vc-rational-synergy-sentinel-ci-directory (process what)
-  "Function running at the end of the ccm ci process for a directory, called directly as sentinel, calls the general `vc-rational-synergy-sentinel'.
-  Date          : Apr/2003
-  Parameters    : PROCESS: the ccm process 
-                  WHAT: the change in the ccm process
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (let* 
-      (
-       (buffer (vc-cmsyn-get-buffer-mapped-to-proc process))
-       (output-buffer (process-buffer process))
-       (message-string "")
-       )
-    ;; ----------
-    ;; check parallel versions for 1 of the files
-    ;; ----------
-    (save-excursion
-      (set-buffer output-buffer)
-      (goto-char (point-max))
-      (while (re-search-backward "Starting check in " vc-rational-synergy-process-start-mark t))
-      (while (re-search-forward (format "%s.*$" vc-rational-synergy-parallel-versions-string ) nil t)
-	(setq message-string (format "%s; %s" message-string (match-string 0)))
-	)
-      (when (> (length message-string) 0) (x-popup-dialog t (list message-string (cons "Ok" t))))
-      )
-    (save-excursion
-      (set-buffer buffer)
-      (when (not (buffer-file-name))
-	(revert-buffer) ;; just refresh, this is a directory
-	)
-      )
-    (vc-cmsyn-check-status-buffers)
-    (vc-cmsyn-clear-buffer-mapping-for-proc process)
-    (message "Ready checking in directory")
-    )
-  )
 
 (defun vc-rational-synergy-sentinel-undo-co-directory (process what)
   "Function running at the end of the ccm undo co process for a directory, called directly as sentinel, calls the general `vc-rational-synergy-sentinel'.
