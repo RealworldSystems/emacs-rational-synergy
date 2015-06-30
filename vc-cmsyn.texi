@@ -38,6 +38,10 @@ Copyright @copyright{} 2015  Realworld OO Systems B.V.
 IBM Rational Synergy
 @end macro
 
+@macro usemsgbox{}
+@code{vc-rational-synergy-use-message-boxes}
+@end macro
+
 @dircategory GNU Emacs Lisp
 @direntry
 * @ibmrs{} Mode: (vc-rational-synergy). @ibmrs{} integration for Emacs
@@ -67,8 +71,6 @@ Status-information is shown in the buffer's mode-line.
 * Getting Started:: Getting Started
 * Functionality::   Available Functionality
 * Customization::   Customizing @ibmrs{} mode
-* Patches::         Generating change-files based on differences with the base-line
-* Restrictions/Limitations::    Restrictions and limitations that apply
 * Concept Index::   Index
 * Variable Index::  Index of Custom Variables
 * CLI::             Command-Line Interface
@@ -138,10 +140,17 @@ A significant change between the original Telelogic Change Synergy command infra
 @menu
 * Authentication:: Authentication
 * Task Management:: Task Management
+* Buffer operations:: Buffer operations
+* File operations:: File operations
+* Directory operations:: Directory operations
+* Modeline:: The modeline
 @end menu
 
 @node Authentication, Task Management, , Functionality
 @chapter Authentication
+@cindex authentication functionality
+
+Through authentication, it is possible to be able to communicate with the @ibmrs{} server.
 
 @menu
 * Login...:: Logging in
@@ -149,8 +158,6 @@ A significant change between the original Telelogic Change Synergy command infra
 * Current User:: Display information for the current user
 * Status:: Display generic status information
 @end menu
-
-@cindex authentication functionality
 
 @node Login..., Logout..., , Authentication
 @chapter Login...
@@ -283,73 +290,190 @@ on in the Echo Area, if a user has been logged in.
 
 
 
-@node Task Management, Authentication, , Functionality
+@node Task Management, Authentication, Buffer operations, Functionality
+@chapter Task Management
+@cindex task functionality
+
+Task management is performed by the user to be able to switch between several
+assigned tasks within the context of a particular work area. Typically,
+to be able to work on a particular file, it is necessary to set a task
+as default task, on which further actions are performed.
+
+@menu
+* Show Default Task:: Shows the default task being currently selected
+* Show Task Files:: Shows which files are part of the task, and which status they have
+* Open Task Files:: Opens all task files which are in working mode
+* Select Task:: Selects a particular task and set it as Default Task
+* Check In Task:: Checks all files and other objects in, and checks in the task (irreversibly)
+@end menu
+
+@section Show Default Task
+@anchor{Show Default Task}
+@cindex default task
+
+(Menu > @ibmrs{} > Show Default Task)@*
+(C-c RET d)
+
+Displays the default task, if set, through a message, either in the minibuffer,
+or if the customization variable @usemsgbox{} has been set, through a message box.
+
+If the currently selected file is not part of any work area, this function will
+not be able to result into a sensible output.
+
+@section Show Task Files
+@anchor{Show Task Files}
+@cindex task files
+
+(Menu > @ibmrs{} > Show Task Files)@*
+(M-x vc-rational-synergy-show-task-files RET)
+
+This will popup the @ibmrs{} Output buffer and show a list of files which are involved 
+in the selected default task. It will show the following information for each
+individual object:
+
+  The object's name, the object's type, the object's version and instance
+  and the current object's status. If the status is ``working'', it will also
+  show the actual location of the object in the work area.
+
+Also, the work area itself is displayed in the top of the buffer, so that
+it becomes easier to navigate to the proper objects available.
+
+@section Open Task Files
+@anchor{Open Task Files}
+@cindex task files
+
+(Menu > @ibmrs{} > Open Task Files)@*
+(M-x vc-rational-synergy-open-task-files RET)
+
+This will open all the files belonging to the default task in emacs,
+unless they are opened already. It uses the same paradigm as `Show Task Files',
+so the files opened are the same ``working'' objects.
+
+@section Select Task
+@anchor{Select Task}
+@cindex select task
+
+(Menu > @ibmrs{} > Select Task)@*
+(C-c RET s)
+
+Shows the minibuffer and requests a task to be selected. The task is to
+be selected using it's identifier, and if in need, can be interrogated
+using the M-h combination. Completion can be accomplished using the TAB key.
+
+@section Check In Task
+@anchor {Check In Task}
+@cindex checkin
+
+(Menu > @ibmrs{} > Check In Task)@*
+(C-c RET t)
+
+Attempts to check in a task, by checking in all non-checked in objects
+belonging to the task, further checks in the task. Before commencing
+actual check in, checks if all buffers associated to a particular
+task's file, are in a non-modified state, and requests a comment before
+continuing check in.
+
+If the customization variable @code{vc-rational-synergy-disallow-empty-comment}
+is set, a comment must be given, otherwise, the operation will be aborted.
+
+@node Buffer operations, File operations, Task Management, Functionality
+@chapter Buffer operartions
+@cindex buffer project
+
+Currently, only one buffer operation is available: Show project. This
+shows the current project of the given work area. It can be invoked through
+
+(Menu > @ibmrs{} > Buffer > Show project)@*
+(M-x vc-rational-synergy-current-project RET)
+
+@node File operations, Directory operations, Buffer operations, Functionality
+@chapter File
+@cindex file
+
+There are several file operations available, such as checking in files,
+checking out files and registering files.
+
+@menu
+* File Checkout:: Checks out a file
+* File Undo Checkout:: Undoes the checking out of a file
+* File Checkin:: Checks a (modified) file in
+* File Register:: Registers a file (adds a file) to the task
+@end menu
+
+
+@section Checkout
+@anchor{File Checkout}
+@cindex checkout file
+
+(Menu > @ibmrs{} > File > Checkout)@*
+(C-c RET o)
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea, and a default task is selected.
+
+Checks out the current file from @ibmrs{} into ``working'' state.
+
+@section Undo Checkout
+@anchor{File Undo Checkout}
+@cindex undo checkout file
+
+(Menu > @ibmrs{} > File > Undo Checkout)@*
+(C-c RET u)
+
+Brings the file back into the state before checkout, 
+deleting the checked out version from @ibmrs{}. This means that
+all modifications currently made, are discarded.
+
+This operations allways requests the user to proceed, even if
+the buffer is in a saved state, as data can be permanently lost.
+
+@section Checkin
+@anchor {File Checkin}
+@cindex checkin file
+
+(Menu > @ibmrs{} > File Checkin)@*
+(C-c RET i) 
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea, and a default task is selected.
+
+If the buffer is in a saved state, this operation will ask the user
+whether or not the buffer should be saved. If it is not so, the
+operation will be aborted.
+
+Before checking in, asks the user to enter a comment. If the customization
+variable @code{vc-rational-synergy-disallow-empty-comment}
+is set, a comment must be given, otherwise, the operation will be aborted.
+
+If all above prerequisites are met, the file is checked in and the
+buffer is updated to reflect these changes.
+
+@section Register
+@anchor{File Register}
+@cindex register file
+
+
+
+@node Directory operations, Modeline, File operations, Functionality
+@chapter Directory
+@cindex file
+
+@node Modeline, , Directory operations, Functionality
+@chapter Modeline
+@cindex modeline
+
+(Menu > @ibmrs{} > Update Modeline)@*
+(M-x vc-rational-synergy-update-modeline RET)
+
+It is possible to update the modeline of a buffer. This is especially necessary
+if direct operations are performed using the CCM command from within a shell in
+Emacs.
+
+The modeline will be updated by appending a suffix to the buffer's name, if the
+buffer is visiting a file within a work area. It will show the status of the
+file and the version of the file.
 
 @enumerate
-@item Show Default Task (C-c RET d)
-@anchor{Show Default Task}@*
-This will popup the @ibmrs{} Output buffer and show which task is default.@*
-Sample Output:@*
-@quotation
-Retrieving Current Default Task@*
-@*
-27: Fix for Task 26: Cableupdate@*
-@*
-@ibmrs{} Command finished@*
-@end quotation
-
-@item Show Task Files
-@anchor{Show Task Files}@*
-This will popup the @ibmrs{} Output buffer and show a list of files are involved in the default task.@*
-Sample Output:@*
-@quotation
-Retrieving files for task 27: Fix for Task 26: SynopsisTest...@*
-@*
-1) collection_transfer.magik~1.1.3:majik:1 @*
-2) collection_transferxxx~2:dir:1          @*
-3) testgeert.magik~1:magik:1               @*
-@*
-@ibmrs{} Command finished@*
-@end quotation
-
-@item Open Task Files
-@anchor{Open Task Files}@*
-This will open the files belonging to the default task in emacs.@*
-Restrictions apply: @xref{open-task-files-restriction}.
-
-@item Select Task (C-c RET s)
-@anchor{Select Task}@*
-Popup the @ibmrs{} GUI with the task window allowing you to select a task.
-
-@item Check Out This File (C-c RET o)
-@anchor{Check Out This File}@*
-This item is only active in a file-buffer within a @ibmrs{} Workarea.
-Check out the current file from @ibmrs{} into writable state.@*
-Sample Output:@*
-@quotation
-Starting check out of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer.magik...@*
-@*
-Parallel versions exist for collection_transfer.magik~1.1.3:majik:1@*
-Added 'release' attribute with value '310_4' to object collection_transfer.magik~1.1.4:majik:1@*
-Warning: Parallel branches exist for collection_transfer.magik~1.1.4@*
-Checked out new version 'collection_transfer.magik~1.1.4' from 'collection_transfer.magik~1.1.3'@*
-Associated object collection_transfer.magik~1.1.4:majik:1 with task 27.@*
-@*
-@ibmrs{} Command finished@*
-@end quotation
-
-@item Undo Check Out File (C-c RET u)
-@anchor{Undo Check Out File}@*
-Brings the file back into the state before checkout, deleting the checked out version from @ibmrs{}.@*
-Sample Output:@*
-@quotation
-Starting undo check out of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer.magik...@*
-@*
-Member 'collection_transfer.magik~1.1.4' has been replaced by 'collection_transfer.magik~1.1.3'.@*
-Object 'collection_transfer.magik~1.1.4:majik:1' has been deleted.@*
-@*
-@ibmrs{} Command finished@*
-@end quotation
 
 @item Check Out This Directory
 @anchor{Check Out This Directory}@*
@@ -360,24 +484,6 @@ Check out the directory object from @ibmrs{} into writable state.
 @anchor{Undo Check Out Directory}@*
 Brings the directory object back into the state before checkout, deleting the checked out version from @ibmrs{}.
 
-@item Check In This File (C-c RET i) 
-@anchor{Check In This File} @*
-This item is only active in a file-buffer within a @ibmrs{} Workarea.
-Check in the current file into @ibmrs{} into readonly (integrate) state.@*
-Sample Output:@*
-@quotation
-Starting check in of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer.magik...@*
-@*
-Warning: Parallel branches exist for collection_transfer.magik~1.1.3@*
-Archiving collection_transfer.magik~1.1.3:source@*
-Checked in 'collection_transfer.magik~1.1.3' to 'integrate'@*
-Summary:@*
-	0  skipped.@*
-	1  succeeded.@*
-	0  failed@*
-@*
-@ibmrs{} Command finished@*
-@end quotation
 
 @item Register This File into @ibmrs{} (C-c RET r)
 @anchor{Register This File into @ibmrs{}} @*
@@ -416,17 +522,6 @@ When the option @code{vc-cmsyn-register-checks-in-p (Check a file in when regist
 the files will be checked in at the same time, otherwise the files will be in
 writable mode
 
-@item Check In Task
-@anchor{Check In Task} @*
-Checks in the default task plus all the files belonging to the task that are still checked out.
-
-@item Update Modeline
-@anchor{Update Modeline} @*
-Retrieves status information about the current file from @ibmrs{}, showing the actual status in the modeline.@*
-Sample modeline:@*
-@quotation
-collection_transfer_mods.magik-1:integrate@*
-@end quotation
 
 @item Show Properties This File (C-c RET p)
 @anchor{Show Properties This File} @*
@@ -517,62 +612,6 @@ Shows the differences between the current file and a prompted version with ediff
 Shows the differences of prompted versions of the current file with ediff.
 @end itemize
 
-@item Set CCM_ADDR
-@anchor{Set CCM_ADDR} @*
-When this item is activated in the admin-options (@ref{vc-cmsyn-enable-set-ccm-addr-p}), this will prompt for the 
-value of the CCM_ADDR environment-variable and set it.
-Note that at login this variable is set automatically by this mode to the value as
-received from @ibmrs{}.@*
-@xref{Admin Options}.
-
-@item Generate patch-file default task
-@anchor{Generate patch-file default task} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate a patch-file with the differences between the last version and the
-base-line-version of all files belonging to the default task.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
-
-@item Generate patch-file...
-@anchor{Generate patch-file...} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate a patch-file with the differences between the last version and the
-base-line-version of all files belonging to a task @samp{that the user is prompted for}.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
-
-@item Load task changes default task
-@anchor{Load task changes default task} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate temporary patch-file(s) with the differences between the last version and the
-base-line-version of all files belonging to the default task and loads them with function as
-configured in the admin-options.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
-
-@item New hot-fix-file...
-@anchor{New hot-fix-file...} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate an empty patch-file in the patches directory to be filled by a developer with hotfix-source-code, not based on any existing source-file.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
-
-@item Jump to source from patch
-@anchor{Jump to source from patch} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), and being in a patch-file,
-this will jump to the same spot in the source-file where the patch was generated from.@*
-If there is more than 1 possibility for the original source-file (in different projects), the user will be prompted which one is desired.
-@xref{Admin Options}.@*
-@xref{Patches}.
-
-@item Jump to patch from source
-@anchor{Jump to patch from source} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), and being in a @ibmrs{} controlled source-file,
-this will check if the current spot in the source-file is present in a patch-file.@*
-If there is more than 1 possibility for the patch-file (in case of parallel versions), all applicable patch-files are opened and the user is notified.
-@xref{Admin Options}.@*
-@xref{Patches}.
-
 @item Customize...
 @anchor{Customize...} @*
 Brings up the Custmization Buffer for the User Options for @ibmrs{} mode.@*
@@ -631,7 +670,6 @@ The 1st group deals with personal preferences, the 2nd with the way the mode wor
 @menu
 * User Options::         User Options
 * Admin Options::        Administration Options
-* Patch Admin Options::  Patch Administration Options
 @end menu
 
 The options should *not* be set with setq but by using the customisation system of emacs.
@@ -676,7 +714,7 @@ If this is non-nil registering a file into @ibmrs{} will check it in at the same
 Indicates the place of the @ibmrs{} menu in the menu-bar (no elements -so nil- is at top).
 @end vtable
 
-@node  Admin Options, Patch Admin Options, User Options, Customization
+@node  Admin Options, , User Options, Customization
 @chapter Admin Options
 @c @cindex 
 
@@ -748,171 +786,15 @@ Regexp for checking @ibmrs{} output to see if a file was checked out correctly.
 
 @end vtable
 
-@node  Patch Admin Options, Patches, Admin Options, Customization
-@chapter Patch Admin Options
-@c @cindex 
-
-The patch admin options are only available from the Menubar if configured so (@ref{vc-cmsyn-customize-admin-button-p}).
-You can put up a customization-buffer by means of: @*
-M-x customize-group RET vc-cmsyn-patch-admin RET.@*
-Here the options are listed and you can manage te values here.
-They deal with a correct working of @ibmrs{} (patch) mode and should be set by the system administrator.
-Whenever @ibmrs{} is configured differently or when output strings from @ibmrs{} change (new versions e.g.), 
-changes in these settings may be necessary.
-
-The options are:@*
-@vtable @samp
-@item vc-cmsyn-patch-functionality-p
-@itemx Patch-file-functionality-in-use? 
-@anchor{vc-cmsyn-patch-functionality-p}Is the patch-file-functionality in use (default available for magik)? This has to be configured!
-
-@item vc-cmsyn-patch-project
-@itemx Patch-project 
-@anchor{vc-cmsyn-patch-project}The patch-project for storing the patch-files: name~version.
-
-@item vc-cmsyn-patch-hotfix-extensions
-@itemx Patch-hotfix-extensions
-List with possible extensions for hot-fix-patch-files (default just @code{magik}, for Smallworld Magik.
-
-@item vc-cmsyn-patch-file-properties
-@itemx Patch-file-properties
-List with data needed for the generation of patch-files, keyed on @samp{patch-file-extension}.
-@enumerate
-@item
- File extension: extension for the patch-file (typically same af for the source-code-files), this identifies the right entry in this list.
-@item
- Patch-file identification regexp: regexp that when it matches in a @ibmrs{} file indicates that the file is a patch-file.
-@item
- Patch-mode write-hook: when supplied, this function is added to write-contents-hooks of a patch-file, the standard value is @code{vc-cmsyn-patch-mode-write-hook}, which will look for updating a Date Changed string with the current date.
-@end enumerate
-
-@item vc-cmsyn-patch-types
-@itemx Patch Types 
-@anchor{vc-cmsyn-patch-types}List with data needed for the generation of patch-files, keyed on @samp{source-file-extension}.
-@enumerate
-@item
- File extension: extension for the patch-file (typically same af for the source-code-files), this identifies the right entry in this list.
-@item
- Expand-function needs to supply begin-and end position of complete source-code around point in the buffer where it's called (without arguments).
-@item
-@anchor{vc-cmsyn-patch-types|relative-path-patch-project} Relative path within project-work-area: the work-area is known via the project, the sub-directory-path should be defined with this entry (e.g. source).
-@item
- Source-file-mode function: function to call to switch the source-code files in the right major-mode (like `magik-mode').
-@item
- Patch-file-name function: function that generates the name for the patch-file, 1 parameter: task.
-@item
- Regexp to match blank / commented code: regexp that is used to check for changes that are pure blanks / comments which will not be taken to the patch-file.
-@item
- Format-string for file-section-start: this string is sent as 1st parameter to `format', the current-source-file being 2nd: inserted in patch-file
- as start-marker for patches from current source-file.
-@item
- Format-string for file-section-end: this string is sent as 1st parameter to `format', the current-source-file being 2nd: inserted in patch-file
- as end-marker for patches from current source-file.
-@item
- Regexp that matches the complete leaf-name of a patch-file of this type, used to identify files as being such a patch-file
-@item
- Init-Function to call within a file-to-diff, to prepare the file for diff (may cleanup emtpy lines, comments, multiple blanks, ...)
-@item
- Function to call after creating the patch-buffer, before code is being inserted
-@item
- Function to call in patch-buffer *after* all code is inserted
-@item
- Function to call in patch-buffer, before code for 1 specific file is inserted (after file-start-marker is inserted)
-@item
- Function to call in patch-buffer, after all code for 1 specific file is inserted (before file-end-marker is inserted).
-@item
- Patch file header generation function
-@item
-@anchor{vc-cmsyn-patch-types|load-function} Load function: (if any, @code{transmit-buffer-to-magik} in case of Smallworld)
-@item
- Jump to original source function (if any)
-@item
- Jump to patch-file function (if any)
-@end enumerate
-
-@end vtable
-
-@node   Patches, Restrictions/Limitations, Patch Admin Options, Top
-@chapter Patches
-@cindex patches
-
-Included in @ibmrs{} mode is a framework for generating patch-files: files with the changes compared with the base-line version.
-The framework is default configured for @code{Smallworld Magik} files.
-
-What happens is that a list is made of the files belonging to the current task.@*
-Restrictions apply: @xref{patch-file-generation-restriction}.
-
-Of those files the base-line version is retrieved.@*
-From both versions a reformatted version is created first:@* 
-all comment-lines are removed and all multiple-blanks that do not occur in strings are reduced to 1 blank.@*
-Then both reformatted versions are diffed against each other.@*
-With the diff output complete-code-blocks are created from the recent version and those blocks are copied into a patch-file.@*
-There is 1 patch-file per task, each block for 1 file is marked with special comment-markers.@*
-For every occurring file-extension different patch-files can be created.@*
-E.g. for Smallworld Magik changes in both magik- and msg-files go into a <name>.magik file.
-
-The patch-files may use the same file-header as in the normal code files is used, it may also be 1 specific for a patch-file.@*
-This is configured for every occurring file-extension in the custom-variable @var{vc-cmsyn-patch-types} (@ref{vc-cmsyn-patch-types}).@*
-Within a patch-file you can jump to the original source with @samp{F6 s}.@*
-If the original file is in more than 1 project, the user will be prompted for the project.@*
-Within a CM Synsergy controlled source-file you can jump to an evt. patch-file with @samp{F6 p}.@*
-When the source is in more than 1 patch-file, all applicable files are opened.
-
-The patch-files are placed in a special patch-project, defined in @ibmrs{}.@*
-The place of this project is configured for Emacs in an option (@ref{vc-cmsyn-patch-project}).@*
-The relative path within the patch-project is configured within @var{vc-cmsyn-patch-types} (@ref{vc-cmsyn-patch-types|relative-path-patch-project}).
-
-A similar function as creating patch-files is present: Load Task Changes.@*
-This does principally the same, only the patch-file is created as a temporary file, which is not registered in @ibmrs{}.@*
-These temporary files are loaded with a function configured in @var{vc-cmsyn-patch-types} then (@ref{vc-cmsyn-patch-types|load-function}).
-
-For configuration: @xref{Patch Admin Options}.
-
-@c @cindex menu-bar menubar getting started installation install
-
-@c @menu
-@c * Installation::                Installation of ECB
-@c * First steps::                 First steps after activating ECB first time
-@c @end menu
-     
-@c @node First Chapter
-@c @chapter First Chapter
-     
-@c @cindex first chapter
-@c @cindex chapter, first
-
-@node Restrictions/Limitations, Concept Index, Patches, Top
-@chapter Restrictions/Limitations
-@table @samp
-@item vc integration
-Although the name of the package is vc-cmsyn it is not integrated with vc (yet).
-It merely indicates that this is the intention.
-In this package sentinel is used in the most calls to Synergy, where vc doesn't offer
-clear hooks for this. It can be integrated nevertheless but with more effort so it just hasn't 
-been done yet.
 
 
-@item Open task-files 
-@anchor{open-task-files-restriction}Since it is possible that more than 1 version of a file belongs to 1 task, the files are filtered on being a leaf in history.
-This means this currently only works with private workareas.@*
-@ref{Open Task Files}
 
-@item Patch-file generation 
-@anchor{patch-file-generation-restriction}Since it is possible that more than 1 version of a file belongs to 1 task, the files are filtered on being a leaf in history.@*
-This is only reliable when users work in private workareas!@*
-Working with shared workareas it is possible that the same file has (a) newer version(s) for other tasks.@*
-In this case it is not a leaf anymore for the current task.@*
-The file would not be selected for generating a patch-file anymore!@*
-@ref{Patches}
-
-@end table
-
-@node CLI, , , Top
+@node CLI, Concept Index, , Top
 @chapter CLI
 @cindex cli command-line
 
 
-@node Concept Index, Variable Index, Restrictions/Limitations, Top
+@node Concept Index, Variable Index, CLI, Top
 @appendix Concept Index
 @printindex cp
 
@@ -924,7 +806,3 @@ The file would not be selected for generating a patch-file anymore!@*
 @c @contents
 
 @bye
-
-@c Local Variables:
-@c compile-command: "tex gdb.texinfo"
-@c End:
