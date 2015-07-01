@@ -41,107 +41,10 @@
 (require 'vc-rational-synergy-task)
 (require 'vc-rational-synergy-checkin)
 (require 'vc-rational-synergy-checkout)
+(require 'vc-rational-synergy-register)
 
 (require 'vc-rational-synergy-administration-customization)
 (require 'vc-rational-synergy-user-customization)
-
-
-
-;;;###autoload
-(defun vc-cmsyn-register-file (&optional p-dont-check-task)
-  "Creates the current file in CM Synergy, only asks the user for a type and version if configured to do so.
-  Author        : Realworld Systems (GR).
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : -"
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let* ((l-type	      (when vc-rational-synergy-query-create-file-type (read-string "Type of the file: " "")))
-	 (l-version	      (when vc-rational-synergy-query-create-file-version (read-string "Version of the file: " "")))
-	 (l-filename	      (buffer-file-name))
-	 (l-create-command    (if l-type (format "create -type %s %s" l-type (vc-rational-synergy-platformify-path l-filename)) (format "create %s" (vc-rational-synergy-platformify-path l-filename))))
-	 (l-attr-command      (when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-filename))))
-	 (l-message	      (format "Starting registration of %s..." l-filename))
-	 )
-    (vc-rational-synergy-run-command l-message l-create-command 'vc-cmsyn-sentinel-register-file nil (not p-dont-check-task))
-    (when l-attr-command (vc-rational-synergy-run-command "Setting version..." l-attr-command)))
-  (vc-rational-synergy-check-session-pause)
-  )
-
-;;;###autoload
-(defun vc-cmsyn-create-directory (&optional p-directory p-type)
-  "Creates the current directory in CM Synergy, *with* files in it, evt. recursive.
-  Author        : Realworld Systems (GR).
-  Date          : Apr/2003
-  Parameters    : P-DIRECTORY: if supplied, this directory will be registered, otherwise dir will be current directory.
-  Returns       : "
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let*
-      (
-       (l-type			(or p-type (when vc-rational-synergy-query-create-file-type (read-string "Type of the files in the Directory: " ""))))
-       (l-version		(when vc-rational-synergy-query-create-file-version (read-string "Version of the Directory: " "")))
-       (l-dir			(or p-directory
-				    (if (equal major-mode 'dired-mode)
-					(if (listp dired-directory) (car dired-directory) dired-directory)
-				      (file-name-directory (buffer-file-name)))))
-       (l-attr-command		(when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-dir))))
-       (l-recursive-p		(or p-directory (y-or-n-p (format "Recursive Register %s?" l-dir))))
-       (l-files			(delq nil (directory-files l-dir t "\\(^[^\\.]\\|^\\.[^.]\\)")))
-       l-create-command l-string l-file l-ok?
-       )
-    ;; ----------
-    ;; 1st this directory
-    ;; ----------
-    (mapcar (lambda (p-regexp)
-	    (when (string-match p-regexp l-dir) (error "Directory %s should not be registered in Synergy according to a filter defined in `vc-rational-synergy-register-directory-and-files-filter'" l-dir))
-	    ) vc-rational-synergy-register-directory-and-files-filter)
-    (message "Registering Directory: -%s-..." l-dir)
-    (setq l-create-command	(format "create -type dir %s" (vc-rational-synergy-platformify-path l-dir)))
-    (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
-    (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
-    (when (string-match vc-rational-synergy-warning-error-output-regexp l-string) (error "Failed Registering %s" l-dir))
-    (dolist (i-file l-files)
-      ;; ----------
-      ;; filter the files
-      ;; ----------
-      (setq l-ok? t)
-      (mapcar (lambda (p-regexp)
-		(when (string-match p-regexp i-file)
-		  (setq l-ok? nil))
-		) vc-rational-synergy-register-directory-and-files-filter)
-      (when l-ok?
-	(if (file-directory-p i-file)
-	    (when l-recursive-p
-	      (vc-cmsyn-create-directory i-file l-type) ;; recursive call
-	      )
-	  (setq l-file (vc-rational-synergy-platformify-path i-file))
-	  (message "Registering: %s" l-file)
-	  (setq l-create-command
-		(if l-type (format "create -type %s %s" l-type l-file)
-		  (format "create %s" l-file))) ;; type determined from extension
-	  (message "Registering: %s" l-file)
-	  (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
-	  (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
-	  (when (string-match vc-rational-synergy-warning-error-output-regexp l-string) (error "Failed Registering %s, see Synergy output-buffer for details" l-dir))
-	  (when l-version
-	    (setq l-attr-command (format "attr -modify version -value %s %s" l-version l-file))
-	    (setq l-string (vc-rational-synergy-command-to-string l-attr-command))
-	    (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
-	    (when (string-match vc-rational-synergy-warning-error-output-regexp l-string) (error "Failed Setting version %s at %s" l-version l-file))
-	    )
-	  (when vc-rational-synergy-register-checks-in-p
-	    (message "Checking in: %s" l-file)
-	    (setq l-string (vc-rational-synergy-command-to-string (format "ci -c \"Checked in new file after registering\" %s" l-file)))
-	    )
-	  )
-	)
-      )
-    (message "Registering Directory: -%s-...done" l-dir)
-    (vc-cmsyn-show-output-buffer)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
 
 
 ;;;###autoload

@@ -129,6 +129,40 @@ and reverts back to the original after running program"
 	   ,(cons 'progn program)
 	 (setq comint-output-filter-functions old-output-filter-functions)))))
 	 
+
+;;;; Wildcard expressions.
+
+(defun vc-rational-synergy-wildcard-to-regexp (expression)
+  "Transforms a wildcard expression to a regular expression
+The following paradigm is used to transform a wild card expression
+to a regular expression:
+
+- A * is exploded as .*
+- A ? is exploded as .?
+- Any other character is encapsulated as character specific regular expression
+"
+  (concat
+   "^"
+   (apply 'concat
+	  (mapcar (lambda (c)
+		    (cond ((string= c "*") ".*")
+			  ((string= c "?") ".?")
+			  (t (regexp-quote c))))
+		  (mapcar 'char-to-string (string-to-list expression))))
+   "$"))
+
+(defun vc-rational-synergy-ignore-regexps ()
+  "Returns all the regular expressions to ignore files, based on their
+normal file name (not absolute)"
+  (mapcar 'vc-rational-synergy-wildcard-to-regexp
+	  vc-rational-synergy-skip-criteria))
+
+(defun vc-rational-synergy-ignore-test (file-name)
+  "Tests a file name whether it is to be ignored"
+  (catch 'exit
+    (dolist (regexp (vc-rational-synergy-ignore-regexps))
+      (when (eq 0 (string-match regexp file-name))
+	(throw 'exit t)))))
   
 ;;;; User Interface.
 

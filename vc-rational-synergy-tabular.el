@@ -116,6 +116,29 @@ task files in a tabular format into the vc-rational-synergy buffer."
 	
       result)))
 
+(defun vc-rational-synergy--tabular-sf (simple-files what)
+  "Tabulates a simple-files list"
+  (let* ((meta-format (format "%%-%ds %%-%ds" 15 64))
+	 (heading (format meta-format "Type" "Name"))
+	 (line (format meta-format
+		       (make-string 15 ?-)
+		       (make-string 64 ?-)))
+	 (real-list (sort simple-files 
+			  (lambda (a b)
+			    (if (eq (car a) (car b))
+				(string< (cdr a) (cdr b))
+			      (string< (symbol-name (car a)) 
+				       (symbol-name (car b)))))))
+	 (result (concat what "\n\n" heading "\n" line "\n")))
+    (dolist (sf real-list)
+      (setq result
+	    (concat result "\n"
+		    (format meta-format
+			    (if (eq (car sf) 'dir) "Directory" "File")
+			    (cdr sf)))))
+    result))
+
+
 (provide 'vc-rational-synergy-tabular)
 
 ;; vc-rational-synergy-tabular.el ends here

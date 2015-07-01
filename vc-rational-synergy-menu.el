@@ -119,10 +119,10 @@
        ["Register"      vc-rational-synergy-register-file  :active vc-cmsyn-mode
 	                                                   :keys "C-c RET r"])
       ("Directories"
-       ["Checkout"	 vc-rational-synergy-co-directory     :active ,dir-mode-check]
-       ["Undo Checkout" vc-rational-synergy-undo-co-directory :active ,dir-mode-check]
-       ["Check In"      vc-rational-synergy-ci-directory      :active ,dir-mode-check]
-       ["Register"      vc-rational-synergy-create-directory  :active ,dir-mode-check]
+       ["Checkout"	 vc-rational-synergy-co-directory       :active ,dir-mode-check]
+       ["Undo Checkout" vc-rational-synergy-undo-co-directory   :active ,dir-mode-check]
+       ["Check In"      vc-rational-synergy-ci-directory        :active ,dir-mode-check]
+       ["Register"      vc-rational-synergy-register-directory  :active ,dir-mode-check]
 	)
       
       ["Update Modeline" vc-rational-synergy-update-modeline]

@@ -106,9 +106,7 @@ using `vc-rational-synergy--parse-formatted"
 			   command-line
 			   format)))
 	(vc-rational-synergy--parse-formatted result))
-    (error (progn
-	     (message (prin1-to-string err))
-	     nil))))
+    (error nil)))
 
 ;;;###autoload
 (defun vc-rational-synergy-command-to-string (command-line)

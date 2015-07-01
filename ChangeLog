@@ -1,5 +1,11 @@
 2015-07-01    <sjoerd.van.leent@realworld-systems.com>
 
+	* vc-rational-synergy-register.el:
+	Added capability to register a directory and to register an individual
+	visited file.
+
+2015-07-01    <sjoerd.van.leent@realworld-systems.com>
+
 	* vc-rational-synergy-checkout.el: Added Directory check out and added
 	File & directory Undo checkout
 

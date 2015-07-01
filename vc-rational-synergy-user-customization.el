@@ -49,15 +49,6 @@
   :type 'boolean
   :group 'vc-rational-synergy)
 
-(defcustom vc-rational-synergy-iconify-frame-when-ccm-gui
-  t
-  "*Boolean indicating if the current emacs-frame should be iconified when a ccm gui is called.
-  Date          : Apr/2003
-  Author        : Realworld Systems (GR)."
-  :tag "Iconify emacs when selecting tasks?"
-  :type 'boolean
-  :group 'vc-rational-synergy)
-
 (defcustom vc-rational-synergy-use-message-boxes
   nil
   "Uses message boxes for messages instead of the minibuffer where available"
@@ -70,6 +61,13 @@
   "If empty comments are disallowed, simply do not checkin without it"
   :tag "If empty comments are disallowed, simply do not checkin without it"
   :type 'boolean
+  :group 'vc-rational-synergy)
+
+(defcustom vc-rational-synergy-skip-criteria
+  (list "*.o" "#*#" "*~" "*.javac" "*.elc" "*.so" "*.dll" "*.exe" "*.magikc")
+  "Ignore File Critera"
+  :tag "While registering an entire directory with files, files matching these criteria are skipped"
+  :type (repeat 'string)
   :group 'vc-rational-synergy)
 
 

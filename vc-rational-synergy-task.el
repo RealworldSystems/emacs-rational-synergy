@@ -271,7 +271,6 @@ TASK-ID is correct, and the buffer is associated properly."
   "Displays a series of task files into a buffer, if task-files is set,
 otherwise displays a message that no task files have been associated"
   (let ((buffer (vc-rational-synergy-buffer)))
-    (message (prin1-to-string buffer))
     (pop-to-buffer buffer)
     (erase-buffer)
     (insert (vc-rational-synergy--tabular-task-files task-files wa-root))))
