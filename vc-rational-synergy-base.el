@@ -42,6 +42,7 @@
 (require 'vc-rational-synergy-checkin)
 (require 'vc-rational-synergy-checkout)
 (require 'vc-rational-synergy-register)
+(require 'vc-rational-synergy-history)
 
 (require 'vc-rational-synergy-administration-customization)
 (require 'vc-rational-synergy-user-customization)
@@ -361,52 +362,6 @@ NB: called from within a hook, careful with errors!
 	 (t
 	  (vc-cmsyn-responsible-p l-up-trail l-expanded t)))))
 
-(defun vc-cmsyn-could-register (p-file)
- "Return non-nil if P-FILE could be registered in CMSyn.
-This is only possible if CMSyn is responsible for P-FILE's directory."
- (vc-cmsyn-responsible-p p-file))
-
-(defun vc-cmsyn-registered (p-file)
- "Return non-nil if FILE is registered in CM Synergy, NB: calls ccm, *slow*.
- Author        : Realworld Systems (GR)
- Date          : Apr/2003
- Parameters    : P-FILE: file-path to check
- Returns       : nil or workfile-version"
- (vc-cmsyn-workfile-version p-file)
- )
-
-(defun vc-cmsyn-workfile-version (p-file)
- "CM Synergy version of `vc-workfile-version', this is *slow* when file is in CM Synergy!.
- Author        : Realworld Systems (GR)
- Date          : Apr/2003
- Parameters    : P-FILE: File we want the version of
- Returns       : version (string) or nil"
- (let* 
-     (
-      (l-responsible (vc-cmsyn-responsible-p p-file)) ;; fast
-      )
-   (when l-responsible ;; in CM Synergy workarea
-     (or (vc-file-getprop p-file 'vc-workfile-version)
-	 ;; ----------
-	 ;; now it gets slow, it wasn't cached yet
-	 ;; ----------
-	 (let* 
-	     (
-	      (l-file			(buffer-file-name))
-	      (l-object-name		(vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
-	      l-version
-	      )
-	   (if (not (string-match vc-rational-synergy-object-name-regexp l-object-name))
-	       (error "Couldn't determine CM Synergy object-name of %s" l-file)
-	     (setq l-version (match-string 1 l-object-name))
-	     (vc-file-setprop l-file 'vc-workfile-version l-version)
-	     l-version
-	     )
-	   )
-	 )
-     )
-   )
- )
 
 ;;; HERE THINGS ARE REFACTORED
 

@@ -1,4 +1,4 @@
-;;; vc-rational-synergy-base.el --- IBM Rational Synergy registration
+;;; vc-rational-synergy-register.el --- IBM Rational Synergy registration
  
 ;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
 ;; Copyright (C) 2003 Realworld Systems

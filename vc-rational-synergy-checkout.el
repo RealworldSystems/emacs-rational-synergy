@@ -1,4 +1,4 @@
-;;; vc-rational-synergy-checkin.el --- IBM Rational Synergy checkout commands
+;;; vc-rational-synergy-checkout.el --- IBM Rational Synergy checkout commands
  
 ;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
 ;; Copyright (C) 2003 Realworld Systems
