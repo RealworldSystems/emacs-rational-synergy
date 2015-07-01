@@ -90,7 +90,7 @@
 
     `("IBM Rational Synergy"
    
-      ["Login..."           vc-rational-synergy-login]
+      ["Login..."           vc-rational-synergy-login             :keys "C-c RET l"]
       ["Logout..."          vc-rational-synergy-logout]
       ["Current user"       vc-rational-synergy-logged-on-user]
       ["Status"             vc-rational-synergy-status]
@@ -146,9 +146,7 @@
 
       ["Customize..."		 (customize-group 'vc-rational-synergy)]
       ["Info..."		vc-rational-synergy-info]
-      ["About..."               vc-rational-synergy-about])))
-
-
+      ["About..."               vc-rational-synergy-about :keys "C-c RET a"])))
 
 ;;;; Activate the menu
 
@@ -188,85 +186,31 @@ path-elements have to be checked in the menu-bar, examples: files for File-menu,
   :group 'vc-rational-synergy
   )
 
-;;;; Administrative options.
-
-
-(provide 'vc-rational-synergy-menu)
-
-;;; vc-rational-synergy-menu.el ends here
-
-
-
-
-;;;; Activate the menu
-
-(defun vc-rational-synergy-menu-path-changed (p-var p-val)
-  "Set custom-option `vc-rational-synergy-menu-path' and move menu if applicable.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : "
-  ;; ----------
-  ;; remove an evt. old menu
-  ;; ----------
-  (when (boundp p-var)
-    (easy-menu-remove-item global-map (car (symbol-value p-var)) "CMSynergy")
-    (when (not (string-equal "menu-bar" (caar p-val))) ;; make sure menu-bar is the 1st entry
-      (setq p-val (cons (cons "menu-bar" (car p-val)) (cdr p-val)))
-      )
-    )
-  (custom-set-default p-var p-val)
-  (easy-menu-add-item global-map (car p-val) menu-bar-vc-rational-synergy-menu (cdr p-val))
+;;;; Define actual key bindings
+;; Key Bindings
+(defvar vc-rational-synergy-mode-map
+  (make-sparse-keymap)
+  "Map for the special keys in minor-mode vc-cmsyn-mode."
   )
 
-(when (boundp 'menu-bar-final-items) (set-variable 'menu-bar-final-items (cons 'CMSynergy (symbol-value 'menu-bar-final-items))))
+(defun vc-rational-synergy--dk (&rest args)
+  "Defines keys into the IBM Rational Synergy mode map"
+  (apply 'define-key vc-rational-synergy-mode-map args))
 
-(defcustom vc-rational-synergy-menu-path
- (cons (list "menu-bar") "separator-vc") 
-  "*Indicates the place of the CM Synergy menu in the menu-bar (no elements -so nil- is at top).
-path-elements have to be checked in the menu-bar, examples: files for File-menu, edit, search, buffer, options.
-  Date          : Apr/2003
-  Author        : Realworld Systems (GR)."
-  :tag "Menu Path for CM Synergy menu"
-  :type '(cons :tag "Menu-path"
-	       (repeat (string     :tag "Path element (like \`tools' or \`menu-bar')"))
-	       (string	      :tag "Optional before item like separator-vc or help")
-	       )
-  :set 'vc-rational-synergy-menu-path-changed
-  :group 'vc-rational-synergy
-  )
+(vc-rational-synergy--dk (kbd "C-c C-m o") 'vc-rational-synergy-co-file)
+(vc-rational-synergy--dk (kbd "C-c C-m u") 'vc-rational-synergy-undo-co-file)
+(vc-rational-synergy--dk (kbd "C-c C-m i") 'vc-rational-synergy-ci-file)
+(vc-rational-synergy--dk (kbd "C-c C-m h") 'vc-rational-synergy-history-file-graphics)
+(vc-rational-synergy--dk (kbd "C-c C-m r") 'vc-rational-synergy-register-file)
+(define-key global-map (kbd "C-c C-m d") 'vc-rational-synergy-default-task)
+(define-key global-map (kbd "C-c C-m t") 'vc-rational-synergy-ci-task)
+(define-key global-map (kbd "C-c C-m s") 'vc-rational-synergy-select-task)
+(define-key global-map (kbd "C-c C-m p") 'vc-rational-synergy-properties)
+(define-key global-map (kbd "C-c C-m a") 'vc-rational-synergy-about)
+(define-key global-map (kbd "C-c C-m l") 'vc-rational-synergy-login) ;; login
+
 
 ;;;; Administrative options.
-
-
-(provide 'vc-rational-synergy-menu)
-
-;;; vc-rational-synergy-menu.el ends here
-
-
-
-;;;; Activate the menu
-
-(defun vc-rational-synergy-menu-path-changed (p-var p-val)
-  "Set custom-option `vc-rational-synergy-menu-path' and move menu if applicable.
-  Author        : Realworld Systems (GR)
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : "
-  ;; ----------
-  ;; remove an evt. old menu
-  ;; ----------
-  (when (boundp p-var)
-    (easy-menu-remove-item global-map (car (symbol-value p-var)) "CMSynergy")
-    (when (not (string-equal "menu-bar" (caar p-val))) ;; make sure menu-bar is the 1st entry
-      (setq p-val (cons (cons "menu-bar" (car p-val)) (cdr p-val)))
-      )
-    )
-  (custom-set-default p-var p-val)
-  (easy-menu-add-item global-map (car p-val) menu-bar-vc-rational-synergy-menu (cdr p-val))
-  )
-
-(when (boundp 'menu-bar-final-items) (set-variable 'menu-bar-final-items (cons 'CMSynergy (symbol-value 'menu-bar-final-items))))
 
 (defcustom vc-rational-synergy-menu-path
  (cons (list "menu-bar") "separator-vc") 

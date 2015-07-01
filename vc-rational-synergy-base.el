@@ -133,28 +133,6 @@
   (vc-rational-synergy-check-session-pause)
   )
 
-;; Key Bindings
-(defvar vc-rational-synergy-mode-map
-  (make-sparse-keymap)
-  "Map for the special keys in minor-mode vc-cmsyn-mode."
-  )
-
-(defun vc-rational-synergy--dk (&rest args)
-  "Defines keys into the IBM Rational Synergy mode map"
-  (apply 'define-key vc-rational-synergy-mode-map args))
-
-(vc-rational-synergy--dk (kbd "C-c C-m o") 'vc-rational-synergy-co-file)
-(vc-rational-synergy--dk (kbd "C-c C-m u") 'vc-rational-synergy-undo-co-file)
-(vc-rational-synergy--dk (kbd "C-c C-m i") 'vc-rational-synergy-ci-file)
-(vc-rational-synergy--dk (kbd "C-c C-m h") 'vc-rational-synergy-history-file-graphics)
-(vc-rational-synergy--dk (kbd "C-c C-m r") 'vc-rational-synergy-register-file)
-(define-key global-map (kbd "C-c C-m t") 'vc-rational-synergy-ci-task)
-(define-key global-map (kbd "C-c C-m s") 'vc-rational-synergy-select-task)
-(define-key global-map (kbd "C-c C-m p") 'vc-rational-synergy-properties)
-(define-key global-map (kbd "C-c C-m a") 'vc-rational-synergy-about)
-(define-key global-map (kbd "C-c C-m l") 'vc-rational-synergy-login) ;; login
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
