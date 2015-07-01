@@ -46,7 +46,6 @@
 (require 'vc-rational-synergy-administration-customization)
 (require 'vc-rational-synergy-user-customization)
 
-
 ;;;###autoload
 (defun vc-cmsyn-history-file-graphics ()
   "Display file history.
@@ -118,21 +117,6 @@
     )
   (vc-rational-synergy-check-session-pause)
   )
-
-
-
-;;;###autoload
-(defun vc-cmsyn-properties ()
-  "Display the properties of the file in the work buffer."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let* ((l-filename (buffer-file-name))
-	 (l-prop-command (format "prop %s" (vc-rational-synergy-platformify-path l-filename))))
-;;     (vc-cmsyn-show-buffer)
-    (vc-rational-synergy-run-command "Properties..." l-prop-command))
-  (vc-rational-synergy-check-session-pause)
-  )
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -423,6 +407,49 @@ This is only possible if CMSyn is responsible for P-FILE's directory."
      )
    )
  )
+
+;;; HERE THINGS ARE REFACTORED
+
+;;;; Properties of a file
+
+(defun vc-rational-synergy--beautify-property (a-symbol)
+  "Given a symbol, uppercases and eradicates the hyphen"
+  (let* ((name (symbol-name a-symbol))
+	 (splitted (split-string name "\\-")))
+    (mapconcat 'capitalize splitted " ")))
+
+(defun vc-rational-synergy--command-properties (file-name)
+  "Acquire the properties of a given object
+This is a wrapper around `vc-rational-synergy-command-w/format-to-list'"
+  (condition-case err
+      (let* ((order '(owner status create-time modify-time 
+			   platform release created-in local-to task))
+	     (result (car (apply 'vc-rational-synergy-command-w/format-to-list
+				 `("prop" ,file-name) order)))
+	     ret v)
+	(when result
+	  (dotimes (i (length order) ret)
+	    (setq ret (cons `(,(vc-rational-synergy--beautify-property
+				(nth i order)) . ,(nth i result)) ret)))))
+    (error nil)))
+  
+
+;;;###autoload
+(defun vc-rational-synergy-properties ()
+  "Display the properties of the file in the work buffer."
+  (interactive)
+  (with-vc-rational-synergy
+   (when (vc-rational-synergy--check-buffer-assoc)
+     (let ((a-list (vc-rational-synergy--command-properties (buffer-file-name)))
+	   (buffer (vc-rational-synergy-buffer))
+	   (file-name (buffer-file-name)))
+       (when a-list
+	 (pop-to-buffer buffer)
+	 (erase-buffer)
+	 (insert (vc-rational-synergy--tabular-props a-list 
+						     file-name))))))
+  (message ""))
+
 
 (provide 'vc-rational-synergy-base)
 

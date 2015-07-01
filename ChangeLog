@@ -1,5 +1,11 @@
 2015-07-01    <sjoerd.van.leent@realworld-systems.com>
 
+	* vc-rational-synergy-base.el (vc-rational-synergy-properties):
+	Refactored the properties method, such that properties are now fetched
+	again, and shown into the appropriate buffer.
+
+2015-07-01    <sjoerd.van.leent@realworld-systems.com>
+
 	* vc-rational-synergy-register.el:
 	Added capability to register a directory and to register an individual
 	visited file.

@@ -41,7 +41,7 @@
 
 (defun vc-rational-synergy--command-file-status (file-name)
   "Acquire the native form of the file-name status, if applicable
-This is a wrapper around `vc-rational-synergy-command-to-string'"
+This is a wrapper around `vc-rational-synergy-command-w/format-to-list'"
   (condition-case err
       (let ((listed (vc-rational-synergy-command-w/format-to-list
 		     `("dir" ,file-name)
