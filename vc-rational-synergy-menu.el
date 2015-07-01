@@ -111,19 +111,18 @@
       ("File"
 	
        ["Checkout"      vc-rational-synergy-co-file        :active vc-cmsyn-mode
-                                                     :keys "C-c RET o"]
+                                                           :keys "C-c RET o"]
        ["Undo Checkout" vc-rational-synergy-undo-co-file   :active vc-cmsyn-mode
-                                                     :keys "C-c RET u"]
-       ["Checkin"       vc-rational-synergy-ci-file        :active vc-cmsyn-mode
-                                                     :keys "C-c RET i"]
+                                                           :keys "C-c RET u"]
+       ["Check In"      vc-rational-synergy-ci-file        :active vc-cmsyn-mode
+                                                           :keys "C-c RET i"]
        ["Register"      vc-rational-synergy-register-file  :active vc-cmsyn-mode
-	                                             :keys "C-c RET r"])
+	                                                   :keys "C-c RET r"])
       ("Directories"
        ["Checkout"	 vc-rational-synergy-co-directory     :active ,dir-mode-check]
        ["Undo Checkout" vc-rational-synergy-undo-co-directory :active ,dir-mode-check]
+       ["Check In"      vc-rational-synergy-ci-directory      :active ,dir-mode-check]
        ["Register"      vc-rational-synergy-create-directory  :active ,dir-mode-check]
-	;; TODO: Should really be enabled
-	;;["Check In"    vc-rational-synergy-ci-directory   :active ,dir-mode-check]
 	)
       
       ["Update Modeline" vc-rational-synergy-update-modeline]

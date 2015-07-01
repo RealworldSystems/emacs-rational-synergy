@@ -61,6 +61,49 @@ t will be returned"
 		       nil))
       (t t)))))
 
+(defun vc-rational-synergy--buffer-directory ()
+  "Given the current buffer, acquire the directory of that buffer.
+If the current buffer is a dired buffer, use the directory name the dired
+buffer is visiting, otherwise, use the file being visited by the buffer,
+and derive the directory. If no file is being visited either, return nil."
+  (if (equal major-mode 'dired-mode) 
+      (if (listp dired-directory)
+	  (car dired-directory)
+	dired-directory)
+    (when (buffer-file-name)
+      (file-name-directory (buffer-file-name)))))
+
+(defun vc-rational-synergy-buffer-directory-status (&optional buffer-or-name)
+  "Checks the status of the underlying directory of the selected buffer.
+if BUFFER-OR-NAME is set, uses that buffer, otherwise uses the
+current buffer.
+In case that the buffer is a dired buffer, the directory visited by the
+dired buffer is used."
+  (interactive)
+
+  (unless buffer-or-name (setq buffer-or-name (current-buffer)))
+
+  (with-current-buffer buffer-or-name
+    ;; There are two options now, either the buffer is visiting a file,
+    ;; the approach is similar to `vc-rational-synergy-buffer-file-status'
+    ;; If the buffer, on the other hand, is a dired buffer, the dired-directory
+    ;; is used.
+
+    (let ((directory-name (vc-rational-synergy--buffer-directory)))
+      (unless directory-name
+	(error (format "%s: %s" "This buffer does not have a file associated"
+		       (buffer-name (current-buffer)))))
+      (let ((st (with-vc-rational-synergy
+		 (vc-rational-synergy--command-file-status directory-name))))
+	(unless st
+	  (error (format "%s: %s" "No valid status found for"
+			 directory-name)))
+	(when (called-interactively-p 'interactive)
+	  (vc-rational-synergy-message
+	   "Directory [%s] for buffer [%s] has status [%s]"
+	   directory-name (buffer-name (current-buffer)) st))
+	st))))
+
 
 (defun vc-rational-synergy-buffer-file-status (&optional buffer-or-name)
   "Checks the file status of the selected buffer.
@@ -95,6 +138,16 @@ current buffer."
   (string= "integrate"
 	   (vc-rational-synergy-buffer-file-status buffer-or-name)))
 
+(defun vc-rational-synergy-buffer-directory-working (&optional buffer-or-name)
+  "Checks if the buffer has a working file status"
+  (string= "working"
+	   (vc-rational-synergy-buffer-directory-status buffer-or-name)))
+
+(defun vc-rational-synergy-buffer-directory-integrate (&optional buffer-or-name)
+  "Checks if the buffer has an integrate file status"
+  (string= "integrate"
+	   (vc-rational-synergy-buffer-directory-status buffer-or-name)))
+
 
 (defun vc-rational-synergy--synergized-buffers ()
   "Returns all buffers part of the default task." 
@@ -102,24 +155,23 @@ current buffer."
       (delq nil
 	    (mapcar (lambda (b)
 		      (with-current-buffer b
-			(when (and (buffer-file-name)
-				   (member (buffer-file-name) files))
-			  b)))
+			(when (and (boundp 'vc-cmsyn-mode) vc-cmsyn-mode) b)))
 		    (buffer-list)))))
 
-(defun vc-rational-synergy--revert-working-buffers ()
+(defun vc-rational-synergy--revert-buffers ()
   "Checks if the default task associates unsaved buffers."
-  (mapcar (lambda (b) (revert-buffer nil t))
-	  (vc-rational-synergy--synergized-buffers)))
+  (dolist (buffer (vc-rational-synergy--synergized-buffers))
+    (with-current-buffer buffer
+      (revert-buffer nil t))))
 
 
 (defun vc-rational-synergy--buffers-modified-p ()
   "Checks if the default task associates unsaved buffers."
   (catch 'exit
-    (let* ((synergized (vc-rational-synergy--synergized-buffers))
+    (let* ((synergized (vc-rational-synergy--synergized-buffers)))
       (dolist (buffer synergized)
 	(with-current-buffer buffer
-	  (when (buffer-modified-p) (throw 'exit t))))))))
+	  (when (buffer-modified-p) (throw 'exit t)))))))
 
 
 (defun vc-rational-synergy-buffer ()
