@@ -71,8 +71,8 @@ Status-information is shown in the buffer's mode-line.
 * Getting Started:: Getting Started
 * Functionality::   Available Functionality
 * Customization::   Customizing @ibmrs{} mode
-* Concept Index::   Index
-* Variable Index::  Index of Custom Variables
+* Concept Index::   Index of concepts
+* Variable Index::  Index of variables
 * CLI::             Command-Line Interface
 
 @end menu
@@ -135,7 +135,7 @@ This brings up a customization buffer where you can adjust options to your perso
 
 Functionality of @ibmrs{} is divided into several features. Authentication provides the means to be able to authenticate against an @ibmrs{} server, such that it is possible to interact with the necessary tooling. Further, there is the ability to perform task management, a rather isolate feature of this particular version control system. Then there is the ability for modification of files and directories. The last feature is to be able to perform difference analysis.
 
-A significant change between the original Telelogic Change Synergy command infrastructure is that the commands are now implemented using the format options of the Command-Line interface (@pxref{CLI}), and the transcript is not used anymore for data capture.
+A significant change between the original Telelogic Change Synergy command infrastructure and the new architecture interfacing is that the commands are now implemented using the format options of the Command-Line interface (@pxref{CLI}), and the transcript is not used anymore for data capture.
 
 @menu
 * Authentication:: Authentication
@@ -144,6 +144,8 @@ A significant change between the original Telelogic Change Synergy command infra
 * File operations:: File operations
 * Directory operations:: Directory operations
 * Modeline:: The modeline
+* Show Properties:: Shows the properties of the file visited by the current buffer
+* History:: Acts on the history of objects
 @end menu
 
 @node Authentication, Task Management, , Functionality
@@ -183,26 +185,31 @@ The login process uses the minibuffer for requesting authentication details.
 Of logging on is successful, this will be shown to the user explicitly,
 if it failed, it will also be shown.
 
+@anchor{CCM_ADDR}
+@defvr {Environment Variable} CCM_ADDR
 After a valid login, the system enviroment variable @code{CCM_ADDR} is used
 for storing the information. Internally, @ibmrs{} uses this value to
 recognize the appropriate session. By checking the status (@pxref{Status}),
 it is possible to see if an authentication process has been proceeded
 properly.
+@end defvr
 
-The environment variable which can be set are:
+The environment variables which can be set are:
 
 @anchor{CCM_USERNAME}
-@anchor{CCM_DATABASE}
-@anchor{CCM_HOST}
-
-@table @code
-@item CCM_USERNAME
+@defvr {Environment Variable} CCM_USERNAME
 Overrides the user name, otherwise `user-login-name' is used. @ref{Username}.
-@item CCM_DATABASE
+@end defvr
+
+@anchor{CCM_DATABASE}
+@defvr {Environment Variable} CCM_DATABASE
 Sets the database location. @ref{Database}.
-@item CCM_HOST
+@end defvr
+
+@anchor{CCM_HOST}
+@defvr {Environment Variable} CCM_HOST
 Sets the host location. @ref{Host}.
-@end table
+@end defvr
 
 @section Username
 @anchor{Username}
@@ -386,6 +393,8 @@ shows the current project of the given work area. It can be invoked through
 (Menu > @ibmrs{} > Buffer > Show project)@*
 (M-x vc-rational-synergy-current-project RET)
 
+
+
 @node File operations, Directory operations, Buffer operations, Functionality
 @chapter File
 @cindex file
@@ -396,7 +405,7 @@ checking out files and registering files.
 @menu
 * File Checkout:: Checks out a file
 * File Undo Checkout:: Undoes the checking out of a file
-* File Checkin:: Checks a (modified) file in
+* File Check In:: Checks a (modified) file in
 * File Register:: Registers a file (adds a file) to the task
 @end menu
 
@@ -421,17 +430,19 @@ Checks out the current file from @ibmrs{} into ``working'' state.
 (C-c RET u)
 
 Brings the file back into the state before checkout, 
-deleting the checked out version from @ibmrs{}. This means that
+deleting the checked out version from @ibmrs{}.
+
+@strong{Caution:} This means that
 all modifications currently made, are discarded.
 
 This operations allways requests the user to proceed, even if
 the buffer is in a saved state, as data can be permanently lost.
 
-@section Checkin
-@anchor {File Checkin}
+@section Check In
+@anchor {File Check In}
 @cindex checkin file
 
-(Menu > @ibmrs{} > File Checkin)@*
+(Menu > @ibmrs{} > File > Check In)@*
 (C-c RET i) 
 
 This item is only able to complete, when a file is visited using
@@ -452,13 +463,134 @@ buffer is updated to reflect these changes.
 @anchor{File Register}
 @cindex register file
 
+(Menu > @ibmrs{} > File > Register)@*
+(C-c RET r)
 
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea, and a default task is selected.
+
+Further, the buffer is to be in a saved state and the file visited
+by the buffer should not be registered.
+
+It will register the file into @ibmrs{} and, when the customization
+variables `c-rational-synergy-query-create-file-type' and/or
+`vc-rational-synergy-query-create-file-version' are set,
+respectively asks for a file type and/or file version. If, using the
+minibuffer, no values are given, normal operation is assumed and
+@ibmrs{} itself will set the proper attributes.
+
+
 
 @node Directory operations, Modeline, File operations, Functionality
 @chapter Directory
-@cindex file
+@cindex directory
 
-@node Modeline, , Directory operations, Functionality
+There are several directory operations available, such as checking in
+a directory, checking out a directory and registering directories.
+
+@menu
+* Directory Checkout:: Checks out a directory
+* Directory Undo Checkout:: Undoes the checking out of a directory
+* Directory Check In:: Checks a (modified) directory in
+* Directory Register:: Registers a directory to the task
+@end menu
+
+@section Checkout
+@anchor{Directory Checkout}
+@cindex checkout directory
+
+(Menu > @ibmrs{} > Directory > Checkout)@*
+(M-x vc-rational-synergy-co-directory)
+
+This item is only able to complete, when a directory is visited using
+a buffer within a particular workarea, or a valid directory is
+visited using a dired buffer. In both cases, a default task is
+required.
+
+Also, if any buffer is open in a modified state and the buffer
+is visiting a non-working file within the directory, it needs to
+be saved or reverted prior to performing the directory checkout.
+
+Checks out the current directory and it's files from @ibmrs{} 
+into ``working'' state.
+
+@section Undo Checkout
+@anchor{Directory Undo Checkout}
+@cindex checkout directory
+
+(Menu > @ibmrs{} > Directory > Undo Checkout)@*
+(M-x vc-rational-synergy-undo-co-directory)
+
+This item is only able to complete, when a directory is visited using
+a buffer within a particular workarea, or a valid directory is
+visited using a dired buffer. In both cases, a default task is
+required.
+
+Also, if any buffer is open in a modified state and the buffer
+is visiting a working file within the directory, it needs to
+be saved or reverted prior to performing the undo checkout.
+
+@strong{Caution:} this operation reverts all data in the files, this means
+that altered data in files being reverted is irreversibly removed.
+
+Undoes the checkout of the current directory and it's files from @ibmrs{} 
+back into ``integrate'' state.
+
+This operation will allways ask the user for confirmation, as data
+can be permanently lost.
+
+@section Check In
+@anchor {Directory Check In}
+@cindex checkin directory
+
+(Menu > @ibmrs{} > Directory > Check In)@*
+(M-x vc-rational-synergy-ci-directory) 
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea or when a directory is visited
+using a dired buffer. Also, a default task must be selected.
+
+If any of the buffers is visiting a file which is part of the directory,
+and the buffer is in modified state, the operation will be aborted, as
+these buffers first need their data to be saved or reverted.
+
+Before checking in, asks the user to enter a comment. If the customization
+variable @code{vc-rational-synergy-disallow-empty-comment}
+is set, a comment must be given, otherwise, the operation will be aborted.
+
+If all above prerequisites are met, the directory and files thereof are 
+checked in and the associated buffers are updated to reflect these changes.
+
+@section Register
+@anchor{Directory Register}
+@cindex register directory
+
+(Menu > @ibmrs{} > Directory > Register)@*
+(M-x vc-rational-synergy-register-directory)
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea or when a directory is visited
+using a dired buffer. Also, a default task must be selected.
+
+This operation is both able to recursively as well as non-recursively
+register a directory. Recursively means that it attempts to register
+all directories, their sub-directories and so on including their files.
+
+The operation will only register files which do not match the files set
+by the customization variable @code{vc-rational-synergy-skip-criteria}
+
+It will register the file into @ibmrs{} and, when the customization
+variable `vc-rational-synergy-query-create-file-version' is set,
+ask for a file version. If, using the minibuffer, no value is given, 
+normal operation is assumed and @ibmrs{} itself will set the proper attributes.
+
+A result of registered files and non-registered are shown in the @ibmrs{}
+buffer, such that is is visible to see which files and directories have been
+properly registered.
+
+
+
+@node Modeline, Show Properties, Directory operations, Functionality
 @chapter Modeline
 @cindex modeline
 
@@ -473,76 +605,26 @@ The modeline will be updated by appending a suffix to the buffer's name, if the
 buffer is visiting a file within a work area. It will show the status of the
 file and the version of the file.
 
+
+
+@node Show Properties, History, Modeline, Functionality
+@chapter Show Properties
+@cindex properties
+
+(Menu > @ibmrs{} > Show Properties)@*
+(C-c RET p)
+
+If the buffer is visiting a file inside a work area, and the file is registered
+in @ibmrs{}, shows the properties of that file inside the @ibmrs{} buffer.
+
+
+
+@node History, , Show Properties, Functionality
+@chapter History
+@cindex history
+
+
 @enumerate
-
-@item Check Out This Directory
-@anchor{Check Out This Directory}@*
-This item is only active in a file-buffer or in dired within a @ibmrs{} Workarea.
-Check out the directory object from @ibmrs{} into writable state.
-
-@item Undo Check Out Directory
-@anchor{Undo Check Out Directory}@*
-Brings the directory object back into the state before checkout, deleting the checked out version from @ibmrs{}.
-
-
-@item Register This File into @ibmrs{} (C-c RET r)
-@anchor{Register This File into @ibmrs{}} @*
-When the option @code{vc-cmsyn-register-checks-in-p (Check a file in when registering?)} is set to t (default)
-the file will be checked in at the same time, otherwise the file will be in
-writable mode@*
-Sample Output of registering a file *combined* with checkin:@*
-@quotation
-Starting registration of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer_mods.magik...@*
-@*
-Added 'release' attribute with value '310_4' to object collection_transfer_mods.magik~1:magik:1@*
-Associated object collection_transfer_mods.magik~1:magik:1 with task 27.@*
-Added 'release' attribute with value '310_4' to object collection_transferxxx~3:dir:1@*
-Associated object collection_transferxxx~3:dir:1 with task 27.@*
-	Updating database with file 'c:\users\geert\ccm_wa2\essent\beheer_components~geert.1.1\beheer_components\collection_transferxxx\collection_transfer_mods.magik'...@*
-Member collection_transfer_mods.magik~1 added to project beheer_components~geert.1.1@*
-Archiving collection_transferxxx~3:source@*
-@*
-@*
-Starting check in of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer_mods.magik...@*
-@*
-Archiving collection_transfer_mods.magik~1:source@*
-Checked in 'collection_transfer_mods.magik~1' to 'integrate'@*
-Summary:@*
-	0  skipped.@*
-	1  succeeded.@*
-	0  failed@*
-@*
-@ibmrs{} Command finished@*
-@end quotation
-
-@item Register This Directory into @ibmrs{}
-@anchor{Register This Directory into @ibmrs{}} @*
-This checks in both the current directory and the files in it, prompting for recursive registration.
-When the option @code{vc-cmsyn-register-checks-in-p (Check a file in when registering?)} is set to t (default)
-the files will be checked in at the same time, otherwise the files will be in
-writable mode
-
-
-@item Show Properties This File (C-c RET p)
-@anchor{Show Properties This File} @*
-Shows @ibmrs{} properties of the current file in the @ibmrs{} Output buffer.@*
-Sample Output:@*
-@quotation
-Properties...@*
-@*
-name        : graphics_system.magik@*
-version     : 1@*
-owner       : geert@*
-status      : integrate@*
-type        : magik@*
-create_time : woensdag 21 mei 2003 15:45:47@*
-modify_time : woensdag 21 mei 2003 15:46:00@*
-platform    : <void>@*
-release     : 310_4@*
-task        : 27@*
-@*
-@ibmrs{} Command finished@*
-@end quotation
 
 @item Show History
 @anchor{Show History}@*
@@ -617,11 +699,6 @@ Shows the differences of prompted versions of the current file with ediff.
 Brings up the Custmization Buffer for the User Options for @ibmrs{} mode.@*
 @xref{User Options}.
 
-@item Customize Admin...
-@anchor{Customize Admin...} @*
-When this item is activated in the admin-options (@ref{vc-cmsyn-customize-admin-button-p}), this will bring up the Customization Buffer for the Admin Options for @ibmrs{} mode.@*
-@xref{Admin Options}.
-
 @item Help
 @anchor{Help}@*
 @itemize @bullet
@@ -663,13 +740,20 @@ Prints version- and author information in the minibuffer.
 
 This chapter describes how to customize @ibmrs{} mode to suit your wishes and needs.
 Emacs customization variables are used.
-These are divided in 2 groups of custom-variables govering the mode:
-@code{vc-cmsyn-user (User Options)} and @code{vc-cmsyn-admin (Admin Options)}.
-The 1st group deals with personal preferences, the 2nd with the way the mode works.
+These are divided in several groups of custom-variables govering the mode:
+@code{vc-rational-synergy (User Options)},
+@code{vc-rational-synergy-tooling (Tool Options)},
+@code{vc-rational-synergy-admin (Admin Options)} and
+@code{vc-rational-synergy-authentication (Authentication Options)} 
+
+The base group deals with personal preferences, the administrative options
+with how the mode works and the last group with authentication settings.
 
 @menu
-* User Options::         User Options
-* Admin Options::        Administration Options
+* User Options::           User Options
+* Tool Options::           Tool Options
+* Admin Options::          Administration Options
+* Authentication Options:: Authentication Options
 @end menu
 
 The options should *not* be set with setq but by using the customisation system of emacs.
@@ -679,7 +763,7 @@ You may also want to take a look in the Options menu under Customize Emacs.
 Alternatively edit the custom-set-variables section of your personal init file by hand and set
 the options there.
 
-@node  User Options, Admin Options, Customization, Customization
+@node  User Options, Tool Options, , Customization
 @chapter User Options
 @c @cindex 
 
@@ -688,37 +772,74 @@ Every user may work with his / her own settings.
 
 The options are:@*
 @vtable @samp
-@c @itemize @bullet
-@item vc-cmsyn-buffer-frame-width
-@itemx @ibmrs{} output buffer frame width
-The default width of the @ibmrs{} output-buffer-frame.
 
-@item vc-cmsyn-buffer-frame-height
-@itemx @ibmrs{} output buffer frame height
-The default height of the @ibmrs{} output-buffer-frame.
-
-@item vc-cmsyn-command-end-jump-to-output-buffer-p
-@itemx Jump to Output-buffer After Commands?
-The default height of the @ibmrs{} output-buffer-frame.
-
-@item vc-cmsyn-register-checks-in-p
-@itemx Check a file in when registering? 
-If this is non-nil registering a file into @ibmrs{} will check it in at the same time.
-
-@item vc-cmsyn-iconify-frame-when-ccm-gui
-@itemx Iconify emacs when selecting tasks? 
-If this is non-nil registering a file into @ibmrs{} will check it in at the same time.
-
-@item vc-cmsyn-menu-path
-@itemx Menu Path for @ibmrs{} menu 
+@item vc-rational-synergy-menu-path
+@strong{Sets a different menu path}
 Indicates the place of the @ibmrs{} menu in the menu-bar (no elements -so nil- is at top).
+
+@item vc-rational-synergy-use-message-boxes
+@strong{Whether to use message boxes}
+Indicates that operations which conclude with a message, show the message in a
+message box, instead of using the Echo Area (minibuffer) for conveying information.
+
+This option is especially practical for those who are not accustomed to how
+the Emacs @ibmrs{} interface works.
+
+@item vc-rational-synergy-disallow-empty-comment
+@strong{Disallow comments which are empty}
+
+When activated, and as such set to a non-nil value, this option disallows users
+from attempting a check in opereration without giving a valid comment.
+
+@item vc-rational-synergy-skip-criteria
+@strong{Skip files from directory registration}
+
+When a directory is being registered, the extensions mentioned here will be
+used to match against files being registered during directory registration.
+
+If a file (or directory) matches a criterion, the file (or directory) will
+not be registered. A typical a criterion is an artifact from a compilation
+of a unit.
+
+The criteria are defined as wildcard criteria.
+
+@item vc-rational-synergy-version-object-separator
+@strong{Project Version Object Separator}
+
+The @ibmrs{} object-version separator.@*
+This is configured in @ibmrs{}, separates object-name and version in 4-part-names,
+typically, this is a tilde (~).
+
 @end vtable
 
-@node  Admin Options, , User Options, Customization
+
+@node Tool Options, Admin Options, User Options, Customization
+@chapter User Options
+@c @cindex 
+
+The user options are available from the Menubar and deal with purely personal preferences.
+Every user may work with his / her own settings.
+
+The options are:@*
+@vtable @samp
+
+@item vc-rational-synergy-binary-name
+@strong{@ibmrs{} binary (executable) name}
+
+The @ibmrs{} executable name, typically, this will be @emph{ccm}.
+
+@item vc-rational-synergy-startup-path
+@strong{@ibmrs{} startup path}
+
+If the binary can not be found in the system's PATH, it needs to
+be set explicitely where it can be found.
+
+@end vtable
+
+@node  Admin Options, Authentication Options, Tool Options, Customization
 @chapter Admin Options
 @c @cindex 
 
-The admin options are only available from the Menubar if configured so in an option (@ref{vc-cmsyn-customize-admin-button-p}).
 You can put up a customization-buffer by means of: @*
 M-x customize-group RET vc-cmsyn-admin RET.@*
 Here the options are listed and you can manage te values here.
@@ -728,61 +849,67 @@ changes in these settings may be necessary.
 
 The options are:@*
 @vtable @samp
-@item vc-cmsyn-check-default-task-set-p
-@itemx Check for default task set? 
-Boolean indicating if it has to be checked if a default task is set before performing a ccm update.
 
-@item vc-cmsyn-query-create-file-type
-@itemx Query File-type? 
+@item vc-rational-synergy-query-create-file-type
+@strong{Query File-type?}
 Boolean indicating if type of file has to be queried before registering a file in ccm
 Typically this will be organized within @ibmrs{} already so it goes automatically.
 
-@item vc-cmsyn-query-create-file-version
-@itemx Query File-version? 
+@item vc-rational-synergy-query-create-file-version
+@strong{Query File-version?}
 Boolean indicating if version of file has to be queried before registering a file in ccm.
 Typically this will be organized within @ibmrs{} already so it goes automatically.
 
-@item vc-cmsyn-auto-check-status-file-open-p
-@itemx Auto check status on file open? 
+@item vc-rational-synergy-auto-check-status-file-open-p
+@strong{Auto check status on file open?}
 Indicates if @ibmrs{} status should be checked for on opening of files.
 This will have to be switched on, otherwise file-status is not retrieved from @ibmrs{} when files are opened.
 
-@item vc-cmsyn-buffer-name
-@itemx @ibmrs{} output buffer name 
+@item vc-rational-synergy-buffer-name
+@strong{The @ibmrs{} buffer name}
 Name of buffer in which to log @ibmrs{} actions.
 
-@item vc-cmsyn-exe-name
-@itemx @ibmrs{} executable name 
-The @ibmrs{} executable name
+@end vtable
 
-@item vc-cmsyn-version-object-separator
-@itemx Project Version Object Separator 
-The @ibmrs{} object-version separator.@*
-This is configured in @ibmrs{}, separates object-name and version in 4-part-names.
+@node Authentication Options, , Admin Options, Customization
+@chapter Admin Options
+@c @cindex 
 
-@item vc-cmsyn-no-differences-found-string
-@itemx No differences found string 
-The string @ibmrs{} outputs for indicating that there are no differences when comparing releases.
+@vtable @samp
 
-@item vc-cmsyn-parallel-versions-string
-@itemx String output by @ibmrs{} when a parallel version exists
-String in @ibmrs{} output when a parallel version exists.
+@item vc-rational-synergy-authentication-explicit
+@strong{Should explicitely authenticate}
 
-@item vc-cmsyn-already-checked-out-regexp
-@itemx String output by @ibmrs{} when a writable file is tried to checkout 
-Regexp for checking @ibmrs{} output to see if a file was checked out correctly.
+When a file is visited by a buffer inside a work area, or operation is
+started using @ibmrs{}, it automatically starts the authentication procedure.
 
-@item vc-cmsyn-checked-out-status-list
-@itemx String output by @ibmrs{} when a writable file is tried to checkout 
-Regexp for checking @ibmrs{} output to see if a file was checked out correctly.
+If it is wanted to perform this action by hand, and disallow automatic
+authentication, this value should be set to a non-nil value.
 
-@item vc-cmsyn-enable-set-ccm-addr-p
-@itemx CCM_ADDR button? 
-@anchor{vc-cmsyn-enable-set-ccm-addr-p}Indicates if button for setting CCM_ADDR should should be enabled.
+@item vc-rational-synergy-authentication-license-friendly
+@strong{Should be nice to licenses}
 
-@item vc-cmsyn-customize-admin-button-p
-@itemx Customize-admin-options button?
-@anchor{vc-cmsyn-customize-admin-button-p}Determines if button for customizing admin-options should be present in @ibmrs{}-menu, default not, only allowed for specific users.
+Normally, after authentication, a address is taken automatically and
+only returned after logout, also returning the license. If licenses
+are scarce, it could be decided to perform actions such that it will
+authenticate and take a license for the period of the action itself.
+
+@strong{Caution:} this is extremely slow
+
+@item vc-rational-synergy-authentication-settings
+@strong{Database and host settings}
+
+It is necessary to have a database defined. The host can be derived
+from the database name if the normal port is used. The database and
+host can also be determined through @code{CCM_DATABASE} and 
+@code{CCM_HOST}. Setting these values will override those.
+@ref{CCM_DATABASE} and @ref{CCM_HOST}
+
+@item vc-rational-synergy-authentication-username
+@strong{Database and host settings}
+
+If a username is derived but is not the username wanted, it can
+be overriden using this customization variable. @ref{CCM_USERNAME}
 
 @end vtable
 
