@@ -41,178 +41,11 @@
 (require 'vc-rational-synergy-task)
 (require 'vc-rational-synergy-checkin)
 (require 'vc-rational-synergy-checkout)
+(require 'vc-rational-synergy-register)
+(require 'vc-rational-synergy-history)
 
 (require 'vc-rational-synergy-administration-customization)
 (require 'vc-rational-synergy-user-customization)
-
-
-;;;###autoload
-(defun vc-cmsyn-co-directory ()
-  "Check out a directory from CM Synergy.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : checks task set before trying to check-out, same as co file but dir-name is constructed
-  Author        : Realworld Systems (GR)."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  ;; ----------
-  ;; Don't proceed when modified
-  ;; ----------
-  (when (buffer-modified-p) (error "This buffer is modified, please revert or save first."))
-  ;; ----------
-  ;; ok, proceed
-  ;; ----------
-  (let*
-      (
-       (l-filename	      (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
-       (l-message (format "Starting check out of directory %s..." l-filename))
-       l-proc
-       )
-    (vc-rational-synergy-run-command l-message (format "co %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-co-directory nil t)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
-
-
-;;;###autoload
-(defun vc-cmsyn-undo-co-file ()
-  "Undo file checkout from CM Synergy.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let*
-      (
-       (l-filename (buffer-file-name))
-       (l-message (format "Starting undo check out of %s..." l-filename))
-       l-proc
-       )
-    (vc-rational-synergy-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-file nil t)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
-
-;;;###autoload
-(defun vc-cmsyn-undo-co-directory ()
-  "Undo directory checkout from CM Synergy.
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : 
-  Methodology   : 
-  Author        : Realworld Systems (GR)."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let*
-      (
-       (l-filename (if (equal major-mode 'dired-mode) (if (listp dired-directory) (car dired-directory) dired-directory) (file-name-directory (buffer-file-name))))
-       (l-message (format "Starting undo check out of %s..." l-filename))
-       l-proc
-	)
-    (vc-rational-synergy-run-command l-message (format "unuse -replace -delete %s" (vc-rational-synergy-platformify-path l-filename)) 'vc-cmsyn-sentinel-undo-co-directory nil t)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
-
-;;;###autoload
-(defun vc-cmsyn-register-file (&optional p-dont-check-task)
-  "Creates the current file in CM Synergy, only asks the user for a type and version if configured to do so.
-  Author        : Realworld Systems (GR).
-  Date          : Apr/2003
-  Parameters    : 
-  Returns       : -"
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let* ((l-type	      (when vc-rational-synergy-query-create-file-type (read-string "Type of the file: " "")))
-	 (l-version	      (when vc-rational-synergy-query-create-file-version (read-string "Version of the file: " "")))
-	 (l-filename	      (buffer-file-name))
-	 (l-create-command    (if l-type (format "create -type %s %s" l-type (vc-rational-synergy-platformify-path l-filename)) (format "create %s" (vc-rational-synergy-platformify-path l-filename))))
-	 (l-attr-command      (when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-filename))))
-	 (l-message	      (format "Starting registration of %s..." l-filename))
-	 )
-    (vc-rational-synergy-run-command l-message l-create-command 'vc-cmsyn-sentinel-register-file nil (not p-dont-check-task))
-    (when l-attr-command (vc-rational-synergy-run-command "Setting version..." l-attr-command)))
-  (vc-rational-synergy-check-session-pause)
-  )
-
-;;;###autoload
-(defun vc-cmsyn-create-directory (&optional p-directory p-type)
-  "Creates the current directory in CM Synergy, *with* files in it, evt. recursive.
-  Author        : Realworld Systems (GR).
-  Date          : Apr/2003
-  Parameters    : P-DIRECTORY: if supplied, this directory will be registered, otherwise dir will be current directory.
-  Returns       : "
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let*
-      (
-       (l-type			(or p-type (when vc-rational-synergy-query-create-file-type (read-string "Type of the files in the Directory: " ""))))
-       (l-version		(when vc-rational-synergy-query-create-file-version (read-string "Version of the Directory: " "")))
-       (l-dir			(or p-directory
-				    (if (equal major-mode 'dired-mode)
-					(if (listp dired-directory) (car dired-directory) dired-directory)
-				      (file-name-directory (buffer-file-name)))))
-       (l-attr-command		(when l-version (format "attr -modify version -value %s %s" l-version (vc-rational-synergy-platformify-path l-dir))))
-       (l-recursive-p		(or p-directory (y-or-n-p (format "Recursive Register %s?" l-dir))))
-       (l-files			(delq nil (directory-files l-dir t "\\(^[^\\.]\\|^\\.[^.]\\)")))
-       l-create-command l-string l-file l-ok?
-       )
-    ;; ----------
-    ;; 1st this directory
-    ;; ----------
-    (mapcar (lambda (p-regexp)
-	    (when (string-match p-regexp l-dir) (error "Directory %s should not be registered in Synergy according to a filter defined in `vc-rational-synergy-register-directory-and-files-filter'" l-dir))
-	    ) vc-rational-synergy-register-directory-and-files-filter)
-    (message "Registering Directory: -%s-..." l-dir)
-    (setq l-create-command	(format "create -type dir %s" (vc-rational-synergy-platformify-path l-dir)))
-    (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
-    (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
-    (when (string-match vc-rational-synergy-warning-error-output-regexp l-string) (error "Failed Registering %s" l-dir))
-    (dolist (i-file l-files)
-      ;; ----------
-      ;; filter the files
-      ;; ----------
-      (setq l-ok? t)
-      (mapcar (lambda (p-regexp)
-		(when (string-match p-regexp i-file)
-		  (setq l-ok? nil))
-		) vc-rational-synergy-register-directory-and-files-filter)
-      (when l-ok?
-	(if (file-directory-p i-file)
-	    (when l-recursive-p
-	      (vc-cmsyn-create-directory i-file l-type) ;; recursive call
-	      )
-	  (setq l-file (vc-rational-synergy-platformify-path i-file))
-	  (message "Registering: %s" l-file)
-	  (setq l-create-command
-		(if l-type (format "create -type %s %s" l-type l-file)
-		  (format "create %s" l-file))) ;; type determined from extension
-	  (message "Registering: %s" l-file)
-	  (setq l-string (vc-rational-synergy-command-to-string l-create-command)) ;; have to do this sync, because of multipe actions
-	  (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
-	  (when (string-match vc-rational-synergy-warning-error-output-regexp l-string) (error "Failed Registering %s, see Synergy output-buffer for details" l-dir))
-	  (when l-version
-	    (setq l-attr-command (format "attr -modify version -value %s %s" l-version l-file))
-	    (setq l-string (vc-rational-synergy-command-to-string l-attr-command))
-	    (save-excursion (set-buffer (vc-rational-synergy-buffer)) (goto-char (point-max)) (insert "\n" l-string "\n"))
-	    (when (string-match vc-rational-synergy-warning-error-output-regexp l-string) (error "Failed Setting version %s at %s" l-version l-file))
-	    )
-	  (when vc-rational-synergy-register-checks-in-p
-	    (message "Checking in: %s" l-file)
-	    (setq l-string (vc-rational-synergy-command-to-string (format "ci -c \"Checked in new file after registering\" %s" l-file)))
-	    )
-	  )
-	)
-      )
-    (message "Registering Directory: -%s-...done" l-dir)
-    (vc-cmsyn-show-output-buffer)
-    )
-  (vc-rational-synergy-check-session-pause)
-  )
-
 
 ;;;###autoload
 (defun vc-cmsyn-history-file-graphics ()
@@ -285,43 +118,6 @@
     )
   (vc-rational-synergy-check-session-pause)
   )
-
-
-
-;;;###autoload
-(defun vc-cmsyn-properties ()
-  "Display the properties of the file in the work buffer."
-  (interactive)
-  (vc-rational-synergy-check-session)
-  (let* ((l-filename (buffer-file-name))
-	 (l-prop-command (format "prop %s" (vc-rational-synergy-platformify-path l-filename))))
-;;     (vc-cmsyn-show-buffer)
-    (vc-rational-synergy-run-command "Properties..." l-prop-command))
-  (vc-rational-synergy-check-session-pause)
-  )
-
-;; Key Bindings
-(defvar vc-rational-synergy-mode-map
-  (make-sparse-keymap)
-  "Map for the special keys in minor-mode vc-cmsyn-mode."
-  )
-
-(defun vc-rational-synergy--dk (&rest args)
-  "Defines keys into the IBM Rational Synergy mode map"
-  (apply 'define-key vc-rational-synergy-mode-map args))
-
-(vc-rational-synergy--dk (kbd "C-c C-m o") 'vc-rational-synergy-co-file)
-(vc-rational-synergy--dk (kbd "C-c C-m u") 'vc-rational-synergy-undo-co-file)
-(vc-rational-synergy--dk (kbd "C-c C-m i") 'vc-rational-synergy-ci-file)
-(vc-rational-synergy--dk (kbd "C-c C-m h") 'vc-rational-synergy-history-file-graphics)
-(vc-rational-synergy--dk (kbd "C-c C-m r") 'vc-rational-synergy-register-file)
-(define-key global-map (kbd "C-c C-m t") 'vc-rational-synergy-ci-task)
-(define-key global-map (kbd "C-c C-m s") 'vc-rational-synergy-select-task)
-(define-key global-map (kbd "C-c C-m p") 'vc-rational-synergy-properties)
-(define-key global-map (kbd "C-c C-m a") 'vc-rational-synergy-about)
-(define-key global-map (kbd "C-c C-m l") 'vc-rational-synergy-login) ;; login
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -566,52 +362,49 @@ NB: called from within a hook, careful with errors!
 	 (t
 	  (vc-cmsyn-responsible-p l-up-trail l-expanded t)))))
 
-(defun vc-cmsyn-could-register (p-file)
- "Return non-nil if P-FILE could be registered in CMSyn.
-This is only possible if CMSyn is responsible for P-FILE's directory."
- (vc-cmsyn-responsible-p p-file))
 
-(defun vc-cmsyn-registered (p-file)
- "Return non-nil if FILE is registered in CM Synergy, NB: calls ccm, *slow*.
- Author        : Realworld Systems (GR)
- Date          : Apr/2003
- Parameters    : P-FILE: file-path to check
- Returns       : nil or workfile-version"
- (vc-cmsyn-workfile-version p-file)
- )
+;;; HERE THINGS ARE REFACTORED
 
-(defun vc-cmsyn-workfile-version (p-file)
- "CM Synergy version of `vc-workfile-version', this is *slow* when file is in CM Synergy!.
- Author        : Realworld Systems (GR)
- Date          : Apr/2003
- Parameters    : P-FILE: File we want the version of
- Returns       : version (string) or nil"
- (let* 
-     (
-      (l-responsible (vc-cmsyn-responsible-p p-file)) ;; fast
-      )
-   (when l-responsible ;; in CM Synergy workarea
-     (or (vc-file-getprop p-file 'vc-workfile-version)
-	 ;; ----------
-	 ;; now it gets slow, it wasn't cached yet
-	 ;; ----------
-	 (let* 
-	     (
-	      (l-file			(buffer-file-name))
-	      (l-object-name		(vc-rational-synergy-command-to-string (format "ls -f \"%%objectname\" %s" (vc-rational-synergy-platformify-path l-file))))
-	      l-version
-	      )
-	   (if (not (string-match vc-rational-synergy-object-name-regexp l-object-name))
-	       (error "Couldn't determine CM Synergy object-name of %s" l-file)
-	     (setq l-version (match-string 1 l-object-name))
-	     (vc-file-setprop l-file 'vc-workfile-version l-version)
-	     l-version
-	     )
-	   )
-	 )
-     )
-   )
- )
+;;;; Properties of a file
+
+(defun vc-rational-synergy--beautify-property (a-symbol)
+  "Given a symbol, uppercases and eradicates the hyphen"
+  (let* ((name (symbol-name a-symbol))
+	 (splitted (split-string name "\\-")))
+    (mapconcat 'capitalize splitted " ")))
+
+(defun vc-rational-synergy--command-properties (file-name)
+  "Acquire the properties of a given object
+This is a wrapper around `vc-rational-synergy-command-w/format-to-list'"
+  (condition-case err
+      (let* ((order '(owner status create-time modify-time 
+			   platform release created-in local-to task))
+	     (result (car (apply 'vc-rational-synergy-command-w/format-to-list
+				 `("prop" ,file-name) order)))
+	     ret v)
+	(when result
+	  (dotimes (i (length order) ret)
+	    (setq ret (cons `(,(vc-rational-synergy--beautify-property
+				(nth i order)) . ,(nth i result)) ret)))))
+    (error nil)))
+  
+
+;;;###autoload
+(defun vc-rational-synergy-properties ()
+  "Display the properties of the file in the work buffer."
+  (interactive)
+  (with-vc-rational-synergy
+   (when (vc-rational-synergy--check-buffer-assoc)
+     (let ((a-list (vc-rational-synergy--command-properties (buffer-file-name)))
+	   (buffer (vc-rational-synergy-buffer))
+	   (file-name (buffer-file-name)))
+       (when a-list
+	 (pop-to-buffer buffer)
+	 (erase-buffer)
+	 (insert (vc-rational-synergy--tabular-props a-list 
+						     file-name))))))
+  (message ""))
+
 
 (provide 'vc-rational-synergy-base)
 

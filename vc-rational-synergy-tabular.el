@@ -116,6 +116,58 @@ task files in a tabular format into the vc-rational-synergy buffer."
 	
       result)))
 
+(defun vc-rational-synergy--tabular-sf (simple-files what)
+  "Tabulates a simple-files list"
+  (let* ((meta-format (format "%%-%ds %%-%ds" 15 64))
+	 (heading (format meta-format "Type" "Name"))
+	 (line (format meta-format
+		       (make-string 15 ?-)
+		       (make-string 64 ?-)))
+	 (real-list (sort simple-files 
+			  (lambda (a b)
+			    (if (eq (car a) (car b))
+				(string< (cdr a) (cdr b))
+			      (string< (symbol-name (car a)) 
+				       (symbol-name (car b)))))))
+	 (result (concat what "\n\n" heading "\n" line "\n")))
+    (dolist (sf real-list)
+      (setq result
+	    (concat result "\n"
+		    (format meta-format
+			    (if (eq (car sf) 'dir) "Directory" "File")
+			    (cdr sf)))))
+    result))
+
+(defun vc-rational-synergy--tabular-props (a-list file-name)
+  "Tabulates a list of properties of a particular file"
+  (let* ((property-heading vc-rational-synergy-int-property)
+	 (value-heading vc-rational-synergy-int-value)
+	 (length-of-property (length property-heading))
+	 (length-of-value (length value-heading)))
+    
+    (dolist (pair a-list)
+      (let ((p-l (length (car pair)))
+	    (v-l (length (cdr pair))))
+	(when (> p-l length-of-property) (setq length-of-property p-l))
+	(when (> v-l length-of-value) (setq length-of-value v-l))))
+    
+    (let* ((meta-format (format "%%-%ds %%-%ds"
+				(+ 1 length-of-property)
+				length-of-value))
+	   (heading (format meta-format property-heading value-heading))
+	   (line (format meta-format
+			 (make-string length-of-property ?-)
+			 (make-string length-of-value ?-)))
+	   (result (concat (format "Properties of %s" file-name)
+			   "\n\n" heading "\n" line "\n")))
+      
+      (dolist (pair a-list result)
+	(setq result
+	      (concat result "\n"
+		      (format meta-format (concat (car pair) ":") 
+			      (cdr pair))))))))
+
+
 (provide 'vc-rational-synergy-tabular)
 
 ;; vc-rational-synergy-tabular.el ends here

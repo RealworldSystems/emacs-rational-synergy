@@ -42,27 +42,6 @@
   :group 'vc-rational-synergy
   )
 
-(defcustom vc-rational-synergy-register-directory-and-files-filter
-  (list "~$" ",v$" "#$")
-  "user, pwd and synergy-database to use for auto-login"
-  :tag "CM Synergy auto-login-data"
-  :type '(repeat
-	  (regexp :tag "Regexp for files that should not be registered with `Register directory + files'")
-	  )
-  :group 'vc-rational-synergy-admin)
-
-(defcustom vc-rational-synergy-auto-check-in-directory-p
-  nil
-  "*Should vc-rational-synergy check-in the directory immediately again when a file is checked out in this dir?
-With `Collaborative' personal work-areas the default Synergy-behaviour is to check out a directory when a file is checked out.
-It may be better to keep the directories in integrate state so it's the same for everyone..
-  Date          : Nov/2003
-  Author        : Realworld Systems (GR)."
-  :tag "Auto check-in directory on file-checkout?"
-  :type 'boolean
-  :group 'vc-rational-synergy-admin
-  )
-
 (defcustom vc-rational-synergy-check-default-task-set-p
   nil
   "*Boolean indicating if it has to be checked if a default task is set before performing a ccm update.

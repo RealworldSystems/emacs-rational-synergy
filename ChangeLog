@@ -1,3 +1,30 @@
+2015-07-01    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-base.el (vc-rational-synergy-properties):
+	Refactored the properties method, such that properties are now fetched
+	again, and shown into the appropriate buffer.
+
+2015-07-01    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-register.el:
+	Added capability to register a directory and to register an individual
+	visited file.
+
+2015-07-01    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-checkout.el: Added Directory check out and added
+	File & directory Undo checkout
+
+2015-07-01    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-checkin.el (vc-rational-synergy-ci-directory):
+	Added the procedure to be able to check in a directory in it's entirety
+
+2015-07-01    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-menu.el (dir-mode-check):  Reactivated the check in
+	directory option.
+
 2015-06-26    <sjoerd.van.leent@realworld-systems.com>
 
 	* vc-rational-synergy-checkout.el (vc-rational-synergy-co-file):

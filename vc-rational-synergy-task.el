@@ -35,6 +35,7 @@
 (require 'vc-rational-synergy-command-to-string)
 (require 'vc-rational-synergy-utilities)
 (require 'vc-rational-synergy-tabular)
+(require 'vc-rational-synergy-utilities)
 
 ;;;; CCM interface.
 
@@ -270,7 +271,6 @@ TASK-ID is correct, and the buffer is associated properly."
   "Displays a series of task files into a buffer, if task-files is set,
 otherwise displays a message that no task files have been associated"
   (let ((buffer (vc-rational-synergy-buffer)))
-    (message (prin1-to-string buffer))
     (pop-to-buffer buffer)
     (erase-buffer)
     (insert (vc-rational-synergy--tabular-task-files task-files wa-root))))
@@ -315,6 +315,34 @@ otherwise displays a message that no task files have been associated"
 				   (vc-rational-synergy-task-file-status tf))
 		      tf))
 		  task-files))))
+
+(defun vc-rational-synergy--task-files-w/status (status)
+  "Get all task files with a particular status"
+  (let ((tfs (vc-rational-synergy--get-task-files-for-default-task-w/status
+	      status)))
+    (mapcar (lambda (tf)
+	      (vc-rational-synergy-task-file-path tf))
+	    tfs)))
+
+(defun vc-rational-synergy--working-task-files ()
+  "Get all working task files"
+  (vc-rational-synergy--task-files-w/status "working"))
+
+
+(defun vc-rational-synergy--working-directory-files (directory)
+  "Gets all directory files in working state from the current task"
+  (let ((task-files (vc-rational-synergy--working-task-files))
+	(exp (regexp-quote (vc-rational-synergy-unixify-path directory))))
+    (delq nil
+	  (mapcar (lambda (file)
+		    (let ((path (vc-rational-synergy-unixify-path file)))
+		      (when (eq 0 (string-match exp path)) file)))
+		  task-files))))
+			
+
+(defun vc-rational-synergy--integrate-task-files ()
+  "Get all integrate task files"
+  (vc-rational-synergy--task-files-w/status "integrate"))
 
 
  

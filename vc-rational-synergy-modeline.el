@@ -81,13 +81,12 @@
   (with-vc-rational-synergy
    ;; only if we are in a file there is version-information to display
    (when (buffer-file-name)
-     (with-vc-rational-synergy-comint-strip-ctrl-m
-      (let ((version (vc-rational-synergy-command-w/format-to-list
-		      `("ls" ,(vc-rational-synergy-platformify-path
-			       (buffer-file-name)))
-		      'version 'status)))
-	(when version
-	  (vc-rational-synergy--update-modeline-version (car version))))))))
+     (let ((version (vc-rational-synergy-command-w/format-to-list
+		     `("ls" ,(vc-rational-synergy-platformify-path
+			      (buffer-file-name)))
+		     'version 'status)))
+       (when version
+	 (vc-rational-synergy--update-modeline-version (car version)))))))
 
 (provide 'vc-rational-synergy-modeline)
 

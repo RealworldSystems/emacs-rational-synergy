@@ -89,6 +89,16 @@
   "Status"
   "The status of an object")
 
+;;;; Properties.
+
+(defconst vc-rational-synergy-int-property
+  "Property"
+  "The property")
+
+(defconst vc-rational-synergy-int-value
+  "Value"
+  "The value")
+
 
 (provide 'vc-rational-synergy-constants)
 
