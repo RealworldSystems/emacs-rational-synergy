@@ -64,7 +64,7 @@
   :group 'vc-rational-synergy)
 
 (defcustom vc-rational-synergy-skip-criteria
-  (list "*.o" "#*#" "*~" "*.javac" "*.elc" "*.so" "*.dll" "*.exe" "*.magikc")
+  (list "*.o" "#*#" "*~" "*.javac" "*.elc" "*.so" "*.dll" "*.exe" "*.magikc" "*.msgc")
   "Ignore File Critera"
   :tag "While registering an entire directory with files, files matching these criteria are skipped"
   :type '(repeat string)
