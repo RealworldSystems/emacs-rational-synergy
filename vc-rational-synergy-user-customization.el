@@ -67,9 +67,14 @@
   (list "*.o" "#*#" "*~" "*.javac" "*.elc" "*.so" "*.dll" "*.exe" "*.magikc")
   "Ignore File Critera"
   :tag "While registering an entire directory with files, files matching these criteria are skipped"
-  :type (repeat 'string)
+  :type '(repeat string)
   :group 'vc-rational-synergy)
 
+(defcustom vc-rational-synergy-history-flow-south nil
+  "Project direction of history graph southwards"
+  :tag "History graph south"
+  :type 'boolean
+  :group 'vc-rational-synergy)
 
 (provide 'vc-rational-synergy-user-customization)
 

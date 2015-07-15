@@ -1,3 +1,10 @@
+2015-07-15    <sjoerd.van.leent@realworld-systems.com>
+
+	* vc-rational-synergy-history:
+	Introduced completely redesigned history module, which uses Graph-Easy
+	and PERL for plotting a graph inside an Emacs buffer, and takes care of
+	essentials.
+
 2015-07-01    <sjoerd.van.leent@realworld-systems.com>
 
 	* vc-rational-synergy-base.el (vc-rational-synergy-properties):

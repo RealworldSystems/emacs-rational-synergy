@@ -40,6 +40,15 @@
 (require 'cm-synergy-script-mode)             ;; Mode for editing scripts
 (require 'vc-rational-synergy-menu)           ;; The menu
 
+(define-minor-mode vc-cmsyn-mode
+  "Minor-mode for files in a CM Synergy work-area"
+  nil " CMSyn" vc-rational-synergy-mode-map
+  (when vc-cmsyn-mode
+    (vc-cmsyn-check-status-buffer) ;; also check here, update modeline goes async
+    (vc-rational-synergy-update-modeline) ;; also updates status! FIX ME: when into VC this has to be removed!
+    )
+  )
+
 (provide 'vc-rational-synergy)
 
 ;; vc-rational-synergy.el ends here

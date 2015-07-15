@@ -106,7 +106,9 @@
       "---"
       
       ("Buffer"
-       ["Show project"      vc-rational-synergy-current-project])
+       ["Show project"      vc-rational-synergy-current-project :active vc-cmsyn-mode]
+       ["History"           vc-rational-synergy-history         :active vc-cmsyn-mode
+                                                                :keys "C-c RET h"])
 
       ("File"
 	
@@ -131,21 +133,7 @@
       ["Show Properties" vc-rational-synergy-properties     :active vc-cmsyn-mode
                                                       :keys "C-c RET p"]
 
-      ("History"
-       ["File (graphics)" vc-rational-synergy-history-file-graphics :active vc-cmsyn-mode
-	                                                      :keys "C-c RET h"]
-       ["File (details)"       vc-rational-synergy-history-file-details  :active vc-cmsyn-mode ]
-       ["Directory (graphics)" vc-rational-synergy-history-directory-graphics :active ,dir-mode-check]
-       ["Directory (details)"  vc-rational-synergy-history-directory-details  :active ,dir-mode-check])
-
-      ("Compare"
-       ["With Previous Version" vc-rational-synergy-ediff               :active vc-cmsyn-mode ]
-       ["With Other Version"    vc-rational-synergy-ediff-other-version :active vc-cmsyn-mode ]
-       ["Versions"              vc-rational-synergy-ediff-versions      :active vc-cmsyn-mode ])
-      "---" 
-
       ["Customize..."		 (customize-group 'vc-rational-synergy)]
-      ["Info..."		vc-rational-synergy-info]
       ["About..."               vc-rational-synergy-about :keys "C-c RET a"])))
 
 ;;;; Activate the menu
@@ -200,7 +188,7 @@ path-elements have to be checked in the menu-bar, examples: files for File-menu,
 (vc-rational-synergy--dk (kbd "C-c C-m o") 'vc-rational-synergy-co-file)
 (vc-rational-synergy--dk (kbd "C-c C-m u") 'vc-rational-synergy-undo-co-file)
 (vc-rational-synergy--dk (kbd "C-c C-m i") 'vc-rational-synergy-ci-file)
-(vc-rational-synergy--dk (kbd "C-c C-m h") 'vc-rational-synergy-history-file-graphics)
+(vc-rational-synergy--dk (kbd "C-c C-m h") 'vc-rational-synergy-history)
 (vc-rational-synergy--dk (kbd "C-c C-m r") 'vc-rational-synergy-register-file)
 (define-key global-map (kbd "C-c C-m d") 'vc-rational-synergy-default-task)
 (define-key global-map (kbd "C-c C-m t") 'vc-rational-synergy-ci-task)
@@ -208,26 +196,6 @@ path-elements have to be checked in the menu-bar, examples: files for File-menu,
 (define-key global-map (kbd "C-c C-m p") 'vc-rational-synergy-properties)
 (define-key global-map (kbd "C-c C-m a") 'vc-rational-synergy-about)
 (define-key global-map (kbd "C-c C-m l") 'vc-rational-synergy-login) ;; login
-
-
-;;;; Administrative options.
-
-(defcustom vc-rational-synergy-menu-path
- (cons (list "menu-bar") "separator-vc") 
-  "*Indicates the place of the CM Synergy menu in the menu-bar (no elements -so nil- is at top).
-path-elements have to be checked in the menu-bar, examples: files for File-menu, edit, search, buffer, options.
-  Date          : Apr/2003
-  Author        : Realworld Systems (GR)."
-  :tag "Menu Path for CM Synergy menu"
-  :type '(cons :tag "Menu-path"
-	       (repeat (string     :tag "Path element (like \`tools' or \`menu-bar')"))
-	       (string	      :tag "Optional before item like separator-vc or help")
-	       )
-  :set 'vc-rational-synergy-menu-path-changed
-  :group 'vc-rational-synergy
-  )
-
-;;;; Administrative options.
 
 
 (provide 'vc-rational-synergy-menu)

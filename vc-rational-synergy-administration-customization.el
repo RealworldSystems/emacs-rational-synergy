@@ -98,15 +98,18 @@ Typically this will be organized within CM Synergy already so it goes automatica
   :type '(character :tag "CM Synvergy Separator-char")
   :group 'vc-rational-synergy-admin)
 
-(defcustom vc-rational-synergy-parallel-versions-string
-  "\\(Warning: \\)?Parallel \\(versions\\|branches\\) exist for "
-  "*String in CM Synergy output when a parallel version exists.
-  Date          : May/2003
-  Author        : Realworld Systems (GR)."
-  :tag "String output by CM Synergy when a parallel version exists"
+
+(defcustom vc-rational-synergy-perl-path ""
+  "Location where Perl is situated (PATH is used otherwise)"
+  :tag "PERL Path"
   :type 'string
-  :group 'vc-rational-synergy-admin
-  )
+  :group 'vc-rational-synergy-admin)
+
+(defcustom vc-rational-synergy-graph-easy ""
+  "Location where Graph-Easy is located"
+  :tag "Graph-Easy Path"
+  :type 'string
+  :group 'vc-rational-synergy-admin)
 
 
 (provide 'vc-rational-synergy-administration-customization)

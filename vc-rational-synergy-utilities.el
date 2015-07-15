@@ -60,14 +60,6 @@ without adding a drive prefix"
    (if (looking-at "\C-z")
        (delete-char 1))))
 
-(defun vc-rational-synergy-result-error-p (value)
-  "Checks if a given result string indicates a CCM error"
-  (string-match vc-rational-synergy-warning-error-output-regexp value))
-
-(defun vc-rational-synergy-result-okay-p (value)
-  "Checks if a given result string does not indicate a CCM error"
-  (not vc-rational-synergy-result-error-p value))
-
 (defvar vc-rational-synergy--format-string-prefix "\\t>>>\\t"
   "Prefix of the format string send towards IBM Rational Synergy")
 
