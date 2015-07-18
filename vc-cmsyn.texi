@@ -118,7 +118,7 @@ Put the next line in the custom-set-variables section of your initialisation fil
 @end example
 
 @item 
-The CMSynergy menu is found in the menu-bar under Tools by default:
+The @ibmrs{} menu is found in the menu-bar under Tools by default:
  @ibmrs{}@*
 This can be customized by changing the value of custom-var @code{vc-rational-synergy-menu-path} with the Emacs customization system.
 
@@ -387,11 +387,53 @@ is set, a comment must be given, otherwise, the operation will be aborted.
 @chapter Buffer operartions
 @cindex buffer project
 
-Currently, only one buffer operation is available: Show project. This
-shows the current project of the given work area. It can be invoked through
+There are two buffer operations available, one is to show a project and
+the other to display history of a particular buffer.
+
+@menu
+* Show project:: Shows the project details
+* History:: Shows the history, using ASCII graph rendering
+@end menu
+
+@section Show project
+@anchor {Show project}
+@cindex project
 
 (Menu > @ibmrs{} > Buffer > Show project)@*
 (M-x vc-rational-synergy-current-project RET)
+
+Shows the current project name and other details, given that the file
+visited by the buffer is actually part of a proper project.
+
+@section History
+@anchor {History}
+@cindex history
+
+(Menu > @ibmrs{} > Buffer > History)@*
+(C-c RET h)
+
+Since the development of version 7.2 of @ibmrs{}, it has become impossible
+to directly invoke the visualizer of @ibmrs{}. Therefore, another solution
+has come into existence, using semi-graphical rendering.
+
+There is a dependency on Graph-Easy, which is a tool written using PERL,
+which can be found here: @url{http://www.bloodgate.com/perl/graph/manual/}.
+
+To be able to use the tool, it is important to set two customization variables,
+which are: `vc-rational-synergy-perl-path' and `vc-rational-synergy-graph-easy'.
+The PERL path should point to the path containing the binary ``perl'', the
+Graph-Easy path should point to the a location from where the relative location
+of `bin/graph-easy' and the library path of Graph-Easy `lib/' can be 
+simultaniously found.
+
+Using the file visited by the buffer, history will be rendered if the file
+is registered, and there is any history available. The presented graph
+contains information about branching/merging of the CCM object representing
+the file, the tasks assigned to it (and status thereof). Further, it allows
+for an ediff session to be started either for comparing siblings, or for
+comparing the current-buffer (with modifications, if available) and a selected
+version. This can be done by pressing the RET key on the buttons (typically
+underlined elements in a windowing environment).
 
 
 
@@ -607,7 +649,7 @@ file and the version of the file.
 
 
 
-@node Show Properties, History, Modeline, Functionality
+@node Show Properties, , Modeline, Functionality
 @chapter Show Properties
 @cindex properties
 
@@ -618,121 +660,6 @@ If the buffer is visiting a file inside a work area, and the file is registered
 in @ibmrs{}, shows the properties of that file inside the @ibmrs{} buffer.
 
 
-
-@node History, , Show Properties, Functionality
-@chapter History
-@cindex history
-
-
-@enumerate
-
-@item Show History
-@anchor{Show History}@*
-@itemize @bullet
-@item This File (graphics) (C-c RET h)
-@anchor{This File (graphics)}@*
-Shows the history of the current file graphically within the @ibmrs{} GUI.
-
-@item This File (details)
-@anchor{This File (details)}@*
-Shows the history of the current file detailed within the @ibmrs{} Output buffer.@*
-Sample Output:@*
-@quotation
-Retrieving history...@*
-@*
-Object:  collection_transfer.magik~1 (majik:1)@*
-Owner:   ccm_root@*
-State:   released@*
-Created: maandag 24 maart 2003 15:17:13@*
-Task:    10@*
-Comment:@*
-@*
-Predecessors:@*
-Successors:@*
-	collection_transfer.magik~2:majik:1@*
-	collection_transfer.magik~1.1.1:majik:1@*
-	collection_transfer.magik~1.2.1:majik:1@*
-*****************************************************************************@*
-Object:  collection_transfer.magik~2 (majik:1)@*
-Owner:   geert@*
-State:   integrate@*
-Created: dinsdag 15 april 2003 12:03:13@*
-Task:    19@*
-Comment:@*
-checkin from within @ibmrs{}@*
-Predecessors:@*
-	collection_transfer.magik~1:majik:1@*
-Successors:@*
-	collection_transfer.magik~3:majik:1@*
-*****************************************************************************@*
-@*
-@ibmrs{} Command finished@*
-@end quotation
-
-@item This Directory (graphics)
-@anchor{This Directory (graphics)}@*
-Shows the history of the current directory graphically within the @ibmrs{} GUI.
-
-@item This Directory (details)
-@anchor{This Directory (details)}@*
-Shows the history of the current directory detailed within the @ibmrs{} Output buffer.
-@end itemize
-
-@item Compare
-@anchor{Compare}@*
-@itemize @bullet
-@item With Previous Version
-@anchor{With Previous Version}@*
-Shows the differences between the current file and it's predecessor with ediff.
-
-@item With other Version
-@anchor{With other Version}@*
-Shows the differences between the current file and a prompted version with ediff.
-
-@item Versions
-@anchor{Versions}@*
-Shows the differences of prompted versions of the current file with ediff.
-@end itemize
-
-@item Customize...
-@anchor{Customize...} @*
-Brings up the Custmization Buffer for the User Options for @ibmrs{} mode.@*
-@xref{User Options}.
-
-@item Help
-@anchor{Help}@*
-@itemize @bullet
-@item Info...
-@anchor{Info...}@*
-Brings up the Info-help for @ibmrs{} mode.
-
-@item Html...
-@anchor{Html...}@*
-Brings up the HTML-help for @ibmrs{} mode in the default browser.
-@end itemize
-
-@item About CMSynergy Mode...
-@anchor{About CMSynergy Mode...} @*
-Prints version- and author information in the minibuffer.
-@end enumerate
-
-@c @node   Keyboard, Customization, Functionality, Top
-@c @chapter Keyboard
-
-@c Several functions are available through keys on the keyboard:
-@c @itemize
-@c @item
-@c @code{C-c RET l} Login
-
-@c @item
-@c @code{C-c RET d} Show Default Task
-
-@c @item
-@c @code{C-c RET s} Select Task
-
-@c @item
-@c @code{C-c RET o} Check Out This File
-
 
 @node  Customization, User Options, Functionality, Top
 @chapter Customization
@@ -869,6 +796,17 @@ This will have to be switched on, otherwise file-status is not retrieved from @i
 @strong{The @ibmrs{} buffer name}
 Name of buffer in which to log @ibmrs{} actions.
 
+@item vc-rational-synergy-perl-path
+@strong{Location where Perl is situated}
+Name of the path where the Perl binary can be found. If not given, an attempt
+is made to use the system defined PATH environment.
+
+@item vc-rational-synergy-graph-easy
+@strong{Location where Graph-Easy is located}
+Name of the path where both the binary grapheasy (in bin/) can be found, and
+the support libraries for grapheasy. Other than the Perl binary, it is now
+compulsary to set this path.
+
 @end vtable
 
 @node Authentication Options, , Admin Options, Customization
@@ -914,11 +852,15 @@ be overriden using this customization variable. @ref{CCM_USERNAME}
 @end vtable
 
 
-
-
 @node CLI, Concept Index, , Top
 @chapter CLI
 @cindex cli command-line
+
+Currently, there is no direct command line interface implemented
+to target the CCM command line program, however, if there is a session
+available, each then-spawned subprogram will have access to the
+CCM_ADDR environment variable, causing it to be possible to connect
+with the available CCM binary on the platform.
 
 
 @node Concept Index, Variable Index, CLI, Top
