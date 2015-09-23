@@ -5,14 +5,16 @@
 @c %**end of header
      
 @ifinfo
-Copyright @copyright{} 2003  Realworld Systems.
+Copyright @copyright{} 2015  Realworld OO Systems B.V.
 @end ifinfo
 @c @copying
-@c Copyright 2003  Realworld Systems.
+@c Copyright 2015  Realworld OO Systems B.V.
+@c Copyright 2003  Realworld Systems
  
-@c Author: Geert Ribbers <support@@realworldwide.com>
+@c Author: Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+@c Author: Geert Ribbers
 @c Created: May/2003
-@c Updated: May/2003
+@c Updated: June/2015
  
 @c This manual is free software; you can redistribute it and/or modify
 @c it under the terms of the GNU General Public License as published by
@@ -32,13 +34,21 @@ Copyright @copyright{} 2003  Realworld Systems.
 
 @footnotestyle end
 
+@macro ibmrs{}
+IBM Rational Synergy
+@end macro
+
+@macro usemsgbox{}
+@code{vc-rational-synergy-use-message-boxes}
+@end macro
+
 @dircategory GNU Emacs Lisp
 @direntry
-* CM Synergy Mode: (vc-cmsyn). CM Synergy integration for Emacs
+* @ibmrs{} Mode: (vc-rational-synergy). @ibmrs{} integration for Emacs
 @end direntry
 
 @titlepage
-@title CM Synergy mode for Emacs
+@title @ibmrs{} mode for Emacs
 @author Geert Ribbers
 
 @c  The following two commands
@@ -47,58 +57,58 @@ Copyright @copyright{} 2003  Realworld Systems.
 @vskip 0pt plus 1filll
 @end titlepage
      
-@node Top, Getting started, (dir), (dir)
+@node Top, Getting Started, (dir), (dir)
 @ifnottex 
-@top CM Synergy mode for Emacs
+@top @ibmrs{} mode for Emacs
 @end ifnottex
 
-CM Synergy mode for emacs integrates emacs with the Telelogic CM tool.
+@ibmrs{} - Emacs integration
 Files can be registered, checked in and out, history can be viewed, 
 tasks can be selected.
 Status-information is shown in the buffer's mode-line.
      
 @menu
-* Getting started:: Getting started
+* Getting Started:: Getting Started
 * Functionality::   Available Functionality
-* Customization::   Customizing CM Synergy mode
-* Patches::         Generating change-files based on differences with the base-line
-* Restrictions/Limitations::    Restrictions and limitations that apply
-* Concept Index::   Index
-* Variable Index::  Index of Custom Variables
+* Customization::   Customizing @ibmrs{} mode
+* Concept Index::   Index of concepts
+* Variable Index::  Index of variables
+* CLI::             Command-Line Interface
+
 @end menu
 @c * Copying::         Your rights and freedoms.
 
-Author: Geert Ribbers, @uref{http://www.realworldwide.com,Realworld Systems}
+Author: Sjoerd van Leent @uref{http://www.realworld-systems.com,Realworld Systems}
+Author: Geert Ribbers, @uref{http://www.realworld-systems.com,Realworld Systems}
 @c @insertcopying
 
-@node Getting started, Functionality, Top, Top
-@chapter Getting started
+@node Getting Started, Functionality, Top, Top
+@chapter Getting Started
 @cindex getting started installation install
 
-This chapter describes how to install CM Synergy mode and what's the first
-step for using it
+@ibmrs{} is a (proprietary) versioning system, part of the
+IBM Rational toolchain. It is a classic check-in/check-out style versioning
+system, but uses this in conjunction with tasks set by administrative
+and/or support personnel.
+
+This integration is set up to work with version 7.2 of @ibmrs{}
 
 @enumerate
 
 @item
-Eventually unpack the archive.
+To be able to use this package, add the package's path to the load-path, or
+install the module in a location which is pointed to by the load-path.
 
-@item 
-Add directory @code{vc-cmsyn/lisp} to your @code{load-path};
+If the package needs to be added to the load-path, use the following syntax:
+
 @example
-(setq load-path (cons <directory-path for this file> load-path))
+(setq load-path (cons <package-directory> load-path))
 @end example
 
 @item 
-Load the install file:
+Load the vc-rational-synergy integration module:
 @example
-(require 'vc-cmsyn-install)
-@end example
-
-@item 
-If you want to use the patch-functionality, Load the patch-install file:
-@example
-(require 'vc-cmsyn-patch-install)
+(require 'vc-rational-synergy)
 @end example
 
 @item
@@ -108,455 +118,569 @@ Put the next line in the custom-set-variables section of your initialisation fil
 @end example
 
 @item 
-The CMSynergy menu is found in the menu-bar under Tools by default:
- CMSynergy@*
-This can be customized by changing the value of custom-var @code{vc-cmsyn-menu-path} with the emacs-customization system or as shown above for @code{vc-cmsyn-auto-check-status-file-open-p})
-
-@item 
-Restart Emacs.
+The @ibmrs{} menu is found in the menu-bar under Tools by default:
+ @ibmrs{}@*
+This can be customized by changing the value of custom-var @code{vc-rational-synergy-menu-path} with the Emacs customization system.
 
 @item 
 You may want to customize the mode:
-Go to the menu-bar Tools/CMSynergy/Customize...
+Go to the menu-bar @ibmrs{}/Customize...
 This brings up a customization buffer where you can adjust options to your personal preference.
 
 @end enumerate
 @xref{Customization}.
 
-@node Functionality, Customization, Getting started, Top
+@node Functionality, Customization, Getting Started, Top
 @chapter Functionality
 
-The CM Synergy menu lists the available functions.@*
-It is available from the Menubar, the place depends on the value of the custom-option @code{vc-cmsyn-menu-path} (default it's in the Tools menu).
-Some of the options are available through keyboard-shortcuts as well which is shown behind the description.@*
-@enumerate
-@item @ref{Login...}
-@item @ref{Show Default Task}
-@item @ref{Show Task Files}
-@item @ref{Open Task Files}
-@item @ref{Select Task}
-@item @ref{Check Out This File}
-@item @ref{Undo Check Out File}
-@item @ref{Check Out This Directory}
-@item @ref{Undo Check Out Directory}
-@item @ref{Check In This File}
-@item @ref{Register This File into CM Synergy}
-@item @ref{Register This Directory into CM Synergy}
-@item @ref{Check In Task}
-@item @ref{Update Modeline}
-@item @ref{Show Properties This File}
-@item @ref{Show History}
-@itemize @bullet
-@item @ref{This File (graphics)}
-@item @ref{This File (details)}
-@item @ref{This Directory (graphics)}
-@item @ref{This Directory (details)}
-@end itemize
-@item @ref{Compare}
-@itemize @bullet
-@item @ref{With Previous Version}
-@item @ref{With other Version}
-@item @ref{Versions}
-@end itemize
-@item @ref{Set CCM_ADDR}
-@item @ref{Generate patch-file default task}
-@item @ref{Generate patch-file...}
-@item @ref{Load task changes default task}
-@item @ref{Customize...}
-@item @ref{Customize Admin...}
-@item @ref{Help}
-@itemize @bullet
-@item @ref{Info...}
-@item @ref{Html...}
-@end itemize
-@item @ref{About CMSynergy Mode...}
+Functionality of @ibmrs{} is divided into several features. Authentication provides the means to be able to authenticate against an @ibmrs{} server, such that it is possible to interact with the necessary tooling. Further, there is the ability to perform task management, a rather isolate feature of this particular version control system. Then there is the ability for modification of files and directories. The last feature is to be able to perform difference analysis.
 
-@end enumerate
+A significant change between the original Telelogic Change Synergy command infrastructure and the new architecture interfacing is that the commands are now implemented using the format options of the Command-Line interface (@pxref{CLI}), and the transcript is not used anymore for data capture.
+
+@menu
+* Authentication:: Authentication
+* Task Management:: Task Management
+* Buffer operations:: Buffer operations
+* File operations:: File operations
+* Directory operations:: Directory operations
+* Modeline:: The modeline
+* Show Properties:: Shows the properties of the file visited by the current buffer
+* History:: Acts on the history of objects
+@end menu
+
+@node Authentication, Task Management, , Functionality
+@chapter Authentication
+@cindex authentication functionality
+
+Through authentication, it is possible to be able to communicate with the @ibmrs{} server.
+
+@menu
+* Login...:: Logging in
+* Logout...:: Logging out
+* Current User:: Display information for the current user
+* Status:: Display generic status information
+@end menu
+
+@node Login..., Logout..., , Authentication
+@chapter Login...
+@cindex authentication functionality
+
+(Menu > @ibmrs{} > Login...)@*
+(M-x vc-rational-synergy-login RET)
+
+An @ibmrs{} session will be started. During the startup, an authentication
+process will be processed, where information is gathered from the minibuffer.
+
+Normally, the values will be gathered from the surrounding settings
+when possible, especially, the user name will be gathered from the system
+environment. It is possible to preset these values either by using their
+appropriate environment values, otherwise by setting them through customization
+values.
+
+The login procedure will be automatically launched if an @ibmrs{} request
+is made, unless the customization value
+@code{vc-rational-synergy-authentication-explicit} is set.
+
+The login process uses the minibuffer for requesting authentication details.
+Of logging on is successful, this will be shown to the user explicitly,
+if it failed, it will also be shown.
+
+@anchor{CCM_ADDR}
+@defvr {Environment Variable} CCM_ADDR
+After a valid login, the system enviroment variable @code{CCM_ADDR} is used
+for storing the information. Internally, @ibmrs{} uses this value to
+recognize the appropriate session. By checking the status (@pxref{Status}),
+it is possible to see if an authentication process has been proceeded
+properly.
+@end defvr
+
+The environment variables which can be set are:
+
+@anchor{CCM_USERNAME}
+@defvr {Environment Variable} CCM_USERNAME
+Overrides the user name, otherwise `user-login-name' is used. @ref{Username}.
+@end defvr
+
+@anchor{CCM_DATABASE}
+@defvr {Environment Variable} CCM_DATABASE
+Sets the database location. @ref{Database}.
+@end defvr
+
+@anchor{CCM_HOST}
+@defvr {Environment Variable} CCM_HOST
+Sets the host location. @ref{Host}.
+@end defvr
+
+@section Username
+@anchor{Username}
+
+During the process of authentication, the user name will be requested in
+the Emacs minibuffer (Echo area). If available, it
+will suggest the default setting, which is derived from the
+@code {vc-rational-synergy-authentication-username} customization setting. If
+the customization setting is empty, it will attempt to use the user name
+setting from the @ref{CCM_USERNAME} environment variable. If that is unavailable
+it will use the currently logged in user name.
+
+By entering another valid user name, this name will be used while authenticating.
+
+@section Password
+@anchor{Password}
+
+During the process of authentication, the password will be requested in
+the Emacs minibuffer (Echo area). Although all the other authentication 
+settings can be configured, due to security reasons, the password must be
+supplied directly by the user.
+
+@section Database
+@anchor{Database}
+
+During the process of authentication, the database will be requested in
+the Emacs minibuffer (Echo area). If available, it will
+suggest the default setting, which is derived from the
+@code{vc-rational-synergy-authentication-settings} customization setting. If
+the customization setting is empty, it will attempt to use the database setting
+from the @ref{CCM_DATABASE} environment variable. If that is not present either,
+it is mandatory to enter a valid database name.
+
+By entering another valid database name, this name will be used while authenticating
+as location of the database.
+
+@section Host
+@anchor{Host}
+
+During the process of authentication, the host name will be requested in
+the Emacs minibuffer (Echo area). If available, it will
+suggest the default setting, which is derived from the
+@code{vc-rational-synergy-authentication-settings} customization setting. If
+the customization setting is empty, it wil attempt to use the host setting
+from the @ref{CCM_HOST} environment variable. Further, if these are not set,
+it will attempt to derive a valid setting from the @ref{Database}.
+
+By entering another valid host name, this name will be used while authenticating
+as location of the @ibmrs{} server.
+
+@node Logout..., Current User, Login..., Authentication
+@chapter Login...
+@cindex authentication functionality
+
+(Menu > @ibmrs{} > Logout...)@*
+(M-x vc-rational-synergy-logout RET)
 
 
-@enumerate
+Logging out explicitly disconnects the current session.
 
-@item Login... (C-c RET l)
-@anchor{Login...}@*
-Start a CM Synergy session@*
-A CM Synergy session will be started, the result of the action will be shown in the CM Synergy Output Buffer.
-The environment variable @code{CCM_ADDR} will be set to the value as received from CM Synergy.@*
-Sample Output:@*
-@quotation
-Starting CM Synergy...@*
-CM Synergy server starting on host pragem, using database \\computername\ccmdb\essent@*
-@*
-CM Synergy Release 6.2.3040 @*
-@*
-COPYRIGHT 2001 TELELOGIC AB.  All Rights Reserved.@*
-This software is licensed and not sold.  All use of this software is@*
-subject to the terms and conditions of the Telelogic AB@*
-End User Software License, which should be read carefully.@*
-This program is protected by U.S. and international copyright laws as@*
-described in the "About CM Synergy" box.@*
-@*
-RESTRICTED RIGHTS LEGEND/NOTICE@*
-@*
-Use, duplication or disclosure by the government is subject to the@*
-Restricted Rights restrictions as set forth in subparagraph (c)(1)(ii)@*
-of the Rights in Technical Data and Computer Software clause at@*
-DFARS 252.227-7013 or FAR 52.227-14, Alternate III,@*
-subparagraph (g)(3)(i), each clause of current date.@*
-@*
-Telelogic AB, Malmo, Sweden@*
-@*
-CM Synergy ready...@*
-CM Synergy address is ROOSPORTGEERT:1639:192.168.1.101.@*
-@*
-CM Synergy Command finished@*
+
 
-@end quotation
-@item Show Default Task (C-c RET d)
-@anchor{Show Default Task}@*
-This will popup the CM Synergy Output buffer and show which task is default.@*
-Sample Output:@*
-@quotation
-Retrieving Current Default Task@*
-@*
-27: Fix for Task 26: Cableupdate@*
-@*
-CM Synergy Command finished@*
-@end quotation
+@node Current User, Status, Logout..., Authentication
+@chapter Current User
+@cindex authentication functionality
 
-@item Show Task Files
-@anchor{Show Task Files}@*
-This will popup the CM Synergy Output buffer and show a list of files are involved in the default task.@*
-Sample Output:@*
-@quotation
-Retrieving files for task 27: Fix for Task 26: SynopsisTest...@*
-@*
-1) collection_transfer.magik~1.1.3:majik:1 @*
-2) collection_transferxxx~2:dir:1          @*
-3) testgeert.magik~1:magik:1               @*
-@*
-CM Synergy Command finished@*
-@end quotation
+(Menu > @ibmrs{} > Current User)@*
+(M-x vc-rational-synergy-logged-on-user RET)
 
-@item Open Task Files
-@anchor{Open Task Files}@*
-This will open the files belonging to the default task in emacs.@*
-Restrictions apply: @xref{open-task-files-restriction}.
+Shows the user name of the user currently logged on in the Echo Area, if
+a user has been logged in. This is actually the first portion of the
+status (@pxref{Status}).
 
-@item Select Task (C-c RET s)
-@anchor{Select Task}@*
-Popup the CM Synergy GUI with the task window allowing you to select a task.
+
 
-@item Check Out This File (C-c RET o)
-@anchor{Check Out This File}@*
-This item is only active in a file-buffer within a CM Synergy Workarea.
-Check out the current file from CM Synergy into writable state.@*
-Sample Output:@*
-@quotation
-Starting check out of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer.magik...@*
-@*
-Parallel versions exist for collection_transfer.magik~1.1.3:majik:1@*
-Added 'release' attribute with value '310_4' to object collection_transfer.magik~1.1.4:majik:1@*
-Warning: Parallel branches exist for collection_transfer.magik~1.1.4@*
-Checked out new version 'collection_transfer.magik~1.1.4' from 'collection_transfer.magik~1.1.3'@*
-Associated object collection_transfer.magik~1.1.4:majik:1 with task 27.@*
-@*
-CM Synergy Command finished@*
-@end quotation
+@node Status, , Current User, Authentication
+@chapter Status
+@cindex authentication functionality
 
-@item Undo Check Out File (C-c RET u)
-@anchor{Undo Check Out File}@*
-Brings the file back into the state before checkout, deleting the checked out version from CM Synergy.@*
-Sample Output:@*
-@quotation
-Starting undo check out of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer.magik...@*
-@*
-Member 'collection_transfer.magik~1.1.4' has been replaced by 'collection_transfer.magik~1.1.3'.@*
-Object 'collection_transfer.magik~1.1.4:majik:1' has been deleted.@*
-@*
-CM Synergy Command finished@*
-@end quotation
+(Menu > @ibmrs{} > Status)@*
+(M-x vc-rational-synergy-status RET)
 
-@item Check Out This Directory
-@anchor{Check Out This Directory}@*
-This item is only active in a file-buffer or in dired within a CM Synergy Workarea.
-Check out the directory object from CM Synergy into writable state.
+Shows the user name, database and address of the user currently logged 
+on in the Echo Area, if a user has been logged in.
 
-@item Undo Check Out Directory
-@anchor{Undo Check Out Directory}@*
-Brings the directory object back into the state before checkout, deleting the checked out version from CM Synergy.
+
 
-@item Check In This File (C-c RET i) 
-@anchor{Check In This File} @*
-This item is only active in a file-buffer within a CM Synergy Workarea.
-Check in the current file into CM Synergy into readonly (integrate) state.@*
-Sample Output:@*
-@quotation
-Starting check in of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer.magik...@*
-@*
-Warning: Parallel branches exist for collection_transfer.magik~1.1.3@*
-Archiving collection_transfer.magik~1.1.3:source@*
-Checked in 'collection_transfer.magik~1.1.3' to 'integrate'@*
-Summary:@*
-	0  skipped.@*
-	1  succeeded.@*
-	0  failed@*
-@*
-CM Synergy Command finished@*
-@end quotation
+@node Task Management, Authentication, Buffer operations, Functionality
+@chapter Task Management
+@cindex task functionality
 
-@item Register This File into CM Synergy (C-c RET r)
-@anchor{Register This File into CM Synergy} @*
-When the option @code{vc-cmsyn-register-checks-in-p (Check a file in when registering?)} is set to t (default)
-the file will be checked in at the same time, otherwise the file will be in
-writable mode@*
-Sample Output of registering a file *combined* with checkin:@*
-@quotation
-Starting registration of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer_mods.magik...@*
-@*
-Added 'release' attribute with value '310_4' to object collection_transfer_mods.magik~1:magik:1@*
-Associated object collection_transfer_mods.magik~1:magik:1 with task 27.@*
-Added 'release' attribute with value '310_4' to object collection_transferxxx~3:dir:1@*
-Associated object collection_transferxxx~3:dir:1 with task 27.@*
-	Updating database with file 'c:\users\geert\ccm_wa2\essent\beheer_components~geert.1.1\beheer_components\collection_transferxxx\collection_transfer_mods.magik'...@*
-Member collection_transfer_mods.magik~1 added to project beheer_components~geert.1.1@*
-Archiving collection_transferxxx~3:source@*
-@*
-@*
-Starting check in of c:/users/geert/ccm_wa2/essent/beheer_components~geert.1.1/beheer_components/collection_transferxxx/collection_transfer_mods.magik...@*
-@*
-Archiving collection_transfer_mods.magik~1:source@*
-Checked in 'collection_transfer_mods.magik~1' to 'integrate'@*
-Summary:@*
-	0  skipped.@*
-	1  succeeded.@*
-	0  failed@*
-@*
-CM Synergy Command finished@*
-@end quotation
+Task management is performed by the user to be able to switch between several
+assigned tasks within the context of a particular work area. Typically,
+to be able to work on a particular file, it is necessary to set a task
+as default task, on which further actions are performed.
 
-@item Register This Directory into CM Synergy
-@anchor{Register This Directory into CM Synergy} @*
-This checks in both the current directory and the files in it, prompting for recursive registration.
-When the option @code{vc-cmsyn-register-checks-in-p (Check a file in when registering?)} is set to t (default)
-the files will be checked in at the same time, otherwise the files will be in
-writable mode
+@menu
+* Show Default Task:: Shows the default task being currently selected
+* Show Task Files:: Shows which files are part of the task, and which status they have
+* Open Task Files:: Opens all task files which are in working mode
+* Select Task:: Selects a particular task and set it as Default Task
+* Check In Task:: Checks all files and other objects in, and checks in the task (irreversibly)
+@end menu
 
-@item Check In Task
-@anchor{Check In Task} @*
-Checks in the default task plus all the files belonging to the task that are still checked out.
+@section Show Default Task
+@anchor{Show Default Task}
+@cindex default task
 
-@item Update Modeline
-@anchor{Update Modeline} @*
-Retrieves status information about the current file from CM Synergy, showing the actual status in the modeline.@*
-Sample modeline:@*
-@quotation
-collection_transfer_mods.magik-1:integrate@*
-@end quotation
+(Menu > @ibmrs{} > Show Default Task)@*
+(C-c RET d)
 
-@item Show Properties This File (C-c RET p)
-@anchor{Show Properties This File} @*
-Shows CM Synergy properties of the current file in the CM Synergy Output buffer.@*
-Sample Output:@*
-@quotation
-Properties...@*
-@*
-name        : graphics_system.magik@*
-version     : 1@*
-owner       : geert@*
-status      : integrate@*
-type        : magik@*
-create_time : woensdag 21 mei 2003 15:45:47@*
-modify_time : woensdag 21 mei 2003 15:46:00@*
-platform    : <void>@*
-release     : 310_4@*
-task        : 27@*
-@*
-CM Synergy Command finished@*
-@end quotation
+Displays the default task, if set, through a message, either in the minibuffer,
+or if the customization variable @usemsgbox{} has been set, through a message box.
 
-@item Show History
-@anchor{Show History}@*
-@itemize @bullet
-@item This File (graphics) (C-c RET h)
-@anchor{This File (graphics)}@*
-Shows the history of the current file graphically within the CM Synergy GUI.
+If the currently selected file is not part of any work area, this function will
+not be able to result into a sensible output.
 
-@item This File (details)
-@anchor{This File (details)}@*
-Shows the history of the current file detailed within the CM Synergy Output buffer.@*
-Sample Output:@*
-@quotation
-Retrieving history...@*
-@*
-Object:  collection_transfer.magik~1 (majik:1)@*
-Owner:   ccm_root@*
-State:   released@*
-Created: maandag 24 maart 2003 15:17:13@*
-Task:    10@*
-Comment:@*
-@*
-Predecessors:@*
-Successors:@*
-	collection_transfer.magik~2:majik:1@*
-	collection_transfer.magik~1.1.1:majik:1@*
-	collection_transfer.magik~1.2.1:majik:1@*
-*****************************************************************************@*
-Object:  collection_transfer.magik~2 (majik:1)@*
-Owner:   geert@*
-State:   integrate@*
-Created: dinsdag 15 april 2003 12:03:13@*
-Task:    19@*
-Comment:@*
-checkin from within CM Synergy@*
-Predecessors:@*
-	collection_transfer.magik~1:majik:1@*
-Successors:@*
-	collection_transfer.magik~3:majik:1@*
-*****************************************************************************@*
-@*
-CM Synergy Command finished@*
-@end quotation
+@section Show Task Files
+@anchor{Show Task Files}
+@cindex task files
 
-@item This Directory (graphics)
-@anchor{This Directory (graphics)}@*
-Shows the history of the current directory graphically within the CM Synergy GUI.
+(Menu > @ibmrs{} > Show Task Files)@*
+(M-x vc-rational-synergy-show-task-files RET)
 
-@item This Directory (details)
-@anchor{This Directory (details)}@*
-Shows the history of the current directory detailed within the CM Synergy Output buffer.
-@end itemize
+This will popup the @ibmrs{} Output buffer and show a list of files which are involved 
+in the selected default task. It will show the following information for each
+individual object:
 
-@item Compare
-@anchor{Compare}@*
-@itemize @bullet
-@item With Previous Version
-@anchor{With Previous Version}@*
-Shows the differences between the current file and it's predecessor with ediff.
+  The object's name, the object's type, the object's version and instance
+  and the current object's status. If the status is ``working'', it will also
+  show the actual location of the object in the work area.
 
-@item With other Version
-@anchor{With other Version}@*
-Shows the differences between the current file and a prompted version with ediff.
+Also, the work area itself is displayed in the top of the buffer, so that
+it becomes easier to navigate to the proper objects available.
 
-@item Versions
-@anchor{Versions}@*
-Shows the differences of prompted versions of the current file with ediff.
-@end itemize
+@section Open Task Files
+@anchor{Open Task Files}
+@cindex task files
 
-@item Set CCM_ADDR
-@anchor{Set CCM_ADDR} @*
-When this item is activated in the admin-options (@ref{vc-cmsyn-enable-set-ccm-addr-p}), this will prompt for the 
-value of the CCM_ADDR environment-variable and set it.
-Note that at login this variable is set automatically by this mode to the value as
-received from CM Synergy.@*
-@xref{Admin Options}.
+(Menu > @ibmrs{} > Open Task Files)@*
+(M-x vc-rational-synergy-open-task-files RET)
 
-@item Generate patch-file default task
-@anchor{Generate patch-file default task} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate a patch-file with the differences between the last version and the
-base-line-version of all files belonging to the default task.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
+This will open all the files belonging to the default task in emacs,
+unless they are opened already. It uses the same paradigm as `Show Task Files',
+so the files opened are the same ``working'' objects.
 
-@item Generate patch-file...
-@anchor{Generate patch-file...} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate a patch-file with the differences between the last version and the
-base-line-version of all files belonging to a task @samp{that the user is prompted for}.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
+@section Select Task
+@anchor{Select Task}
+@cindex select task
 
-@item Load task changes default task
-@anchor{Load task changes default task} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate temporary patch-file(s) with the differences between the last version and the
-base-line-version of all files belonging to the default task and loads them with function as
-configured in the admin-options.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
+(Menu > @ibmrs{} > Select Task)@*
+(C-c RET s)
 
-@item New hot-fix-file...
-@anchor{New hot-fix-file...} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), 
-this will generate an empty patch-file in the patches directory to be filled by a developer with hotfix-source-code, not based on any existing source-file.@*
-@xref{Admin Options}.@*
-@xref{Patches}.
+Shows the minibuffer and requests a task to be selected. The task is to
+be selected using it's identifier, and if in need, can be interrogated
+using the M-h combination. Completion can be accomplished using the TAB key.
 
-@item Jump to source from patch
-@anchor{Jump to source from patch} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), and being in a patch-file,
-this will jump to the same spot in the source-file where the patch was generated from.@*
-If there is more than 1 possibility for the original source-file (in different projects), the user will be prompted which one is desired.
-@xref{Admin Options}.@*
-@xref{Patches}.
+@section Check In Task
+@anchor {Check In Task}
+@cindex checkin
 
-@item Jump to patch from source
-@anchor{Jump to patch from source} @*
-When patching is configured in the admin-options (@ref{vc-cmsyn-patch-functionality-p}), and being in a CM Synergy controlled source-file,
-this will check if the current spot in the source-file is present in a patch-file.@*
-If there is more than 1 possibility for the patch-file (in case of parallel versions), all applicable patch-files are opened and the user is notified.
-@xref{Admin Options}.@*
-@xref{Patches}.
+(Menu > @ibmrs{} > Check In Task)@*
+(C-c RET t)
 
-@item Customize...
-@anchor{Customize...} @*
-Brings up the Custmization Buffer for the User Options for CM Synergy mode.@*
-@xref{User Options}.
+Attempts to check in a task, by checking in all non-checked in objects
+belonging to the task, further checks in the task. Before commencing
+actual check in, checks if all buffers associated to a particular
+task's file, are in a non-modified state, and requests a comment before
+continuing check in.
 
-@item Customize Admin...
-@anchor{Customize Admin...} @*
-When this item is activated in the admin-options (@ref{vc-cmsyn-customize-admin-button-p}), this will bring up the Customization Buffer for the Admin Options for CM Synergy mode.@*
-@xref{Admin Options}.
+If the customization variable @code{vc-rational-synergy-disallow-empty-comment}
+is set, a comment must be given, otherwise, the operation will be aborted.
 
-@item Help
-@anchor{Help}@*
-@itemize @bullet
-@item Info...
-@anchor{Info...}@*
-Brings up the Info-help for CM Synergy mode.
+@node Buffer operations, File operations, Task Management, Functionality
+@chapter Buffer operartions
+@cindex buffer project
 
-@item Html...
-@anchor{Html...}@*
-Brings up the HTML-help for CM Synergy mode in the default browser.
-@end itemize
+There are two buffer operations available, one is to show a project and
+the other to display history of a particular buffer.
 
-@item About CMSynergy Mode...
-@anchor{About CMSynergy Mode...} @*
-Prints version- and author information in the minibuffer.
-@end enumerate
+@menu
+* Show project:: Shows the project details
+* History:: Shows the history, using ASCII graph rendering
+@end menu
 
-@c @node   Keyboard, Customization, Functionality, Top
-@c @chapter Keyboard
+@section Show project
+@anchor {Show project}
+@cindex project
 
-@c Several functions are available through keys on the keyboard:
-@c @itemize
-@c @item
-@c @code{C-c RET l} Login
+(Menu > @ibmrs{} > Buffer > Show project)@*
+(M-x vc-rational-synergy-current-project RET)
 
-@c @item
-@c @code{C-c RET d} Show Default Task
+Shows the current project name and other details, given that the file
+visited by the buffer is actually part of a proper project.
 
-@c @item
-@c @code{C-c RET s} Select Task
+@section History
+@anchor {History}
+@cindex history
 
-@c @item
-@c @code{C-c RET o} Check Out This File
+(Menu > @ibmrs{} > Buffer > History)@*
+(C-c RET h)
 
+Since the development of version 7.2 of @ibmrs{}, it has become impossible
+to directly invoke the visualizer of @ibmrs{}. Therefore, another solution
+has come into existence, using semi-graphical rendering.
+
+There is a dependency on Graph-Easy, which is a tool written using PERL,
+which can be found here: @url{http://www.bloodgate.com/perl/graph/manual/}.
+
+To be able to use the tool, it is important to set two customization variables,
+which are: `vc-rational-synergy-perl-path' and `vc-rational-synergy-graph-easy'.
+The PERL path should point to the path containing the binary ``perl'', the
+Graph-Easy path should point to the a location from where the relative location
+of `bin/graph-easy' and the library path of Graph-Easy `lib/' can be 
+simultaniously found.
+
+Using the file visited by the buffer, history will be rendered if the file
+is registered, and there is any history available. The presented graph
+contains information about branching/merging of the CCM object representing
+the file, the tasks assigned to it (and status thereof). Further, it allows
+for an ediff session to be started either for comparing siblings, or for
+comparing the current-buffer (with modifications, if available) and a selected
+version. This can be done by pressing the RET key on the buttons (typically
+underlined elements in a windowing environment).
+
+
+
+@node File operations, Directory operations, Buffer operations, Functionality
+@chapter File
+@cindex file
+
+There are several file operations available, such as checking in files,
+checking out files and registering files.
+
+@menu
+* File Checkout:: Checks out a file
+* File Undo Checkout:: Undoes the checking out of a file
+* File Check In:: Checks a (modified) file in
+* File Register:: Registers a file (adds a file) to the task
+@end menu
+
+
+@section Checkout
+@anchor{File Checkout}
+@cindex checkout file
+
+(Menu > @ibmrs{} > File > Checkout)@*
+(C-c RET o)
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea, and a default task is selected.
+
+Checks out the current file from @ibmrs{} into ``working'' state.
+
+@section Undo Checkout
+@anchor{File Undo Checkout}
+@cindex undo checkout file
+
+(Menu > @ibmrs{} > File > Undo Checkout)@*
+(C-c RET u)
+
+Brings the file back into the state before checkout, 
+deleting the checked out version from @ibmrs{}.
+
+@strong{Caution:} This means that
+all modifications currently made, are discarded.
+
+This operations allways requests the user to proceed, even if
+the buffer is in a saved state, as data can be permanently lost.
+
+@section Check In
+@anchor {File Check In}
+@cindex checkin file
+
+(Menu > @ibmrs{} > File > Check In)@*
+(C-c RET i) 
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea, and a default task is selected.
+
+If the buffer is in a saved state, this operation will ask the user
+whether or not the buffer should be saved. If it is not so, the
+operation will be aborted.
+
+Before checking in, asks the user to enter a comment. If the customization
+variable @code{vc-rational-synergy-disallow-empty-comment}
+is set, a comment must be given, otherwise, the operation will be aborted.
+
+If all above prerequisites are met, the file is checked in and the
+buffer is updated to reflect these changes.
+
+@section Register
+@anchor{File Register}
+@cindex register file
+
+(Menu > @ibmrs{} > File > Register)@*
+(C-c RET r)
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea, and a default task is selected.
+
+Further, the buffer is to be in a saved state and the file visited
+by the buffer should not be registered.
+
+It will register the file into @ibmrs{} and, when the customization
+variables `c-rational-synergy-query-create-file-type' and/or
+`vc-rational-synergy-query-create-file-version' are set,
+respectively asks for a file type and/or file version. If, using the
+minibuffer, no values are given, normal operation is assumed and
+@ibmrs{} itself will set the proper attributes.
+
+
+
+@node Directory operations, Modeline, File operations, Functionality
+@chapter Directory
+@cindex directory
+
+There are several directory operations available, such as checking in
+a directory, checking out a directory and registering directories.
+
+@menu
+* Directory Checkout:: Checks out a directory
+* Directory Undo Checkout:: Undoes the checking out of a directory
+* Directory Check In:: Checks a (modified) directory in
+* Directory Register:: Registers a directory to the task
+@end menu
+
+@section Checkout
+@anchor{Directory Checkout}
+@cindex checkout directory
+
+(Menu > @ibmrs{} > Directory > Checkout)@*
+(M-x vc-rational-synergy-co-directory)
+
+This item is only able to complete, when a directory is visited using
+a buffer within a particular workarea, or a valid directory is
+visited using a dired buffer. In both cases, a default task is
+required.
+
+Also, if any buffer is open in a modified state and the buffer
+is visiting a non-working file within the directory, it needs to
+be saved or reverted prior to performing the directory checkout.
+
+Checks out the current directory and it's files from @ibmrs{} 
+into ``working'' state.
+
+@section Undo Checkout
+@anchor{Directory Undo Checkout}
+@cindex checkout directory
+
+(Menu > @ibmrs{} > Directory > Undo Checkout)@*
+(M-x vc-rational-synergy-undo-co-directory)
+
+This item is only able to complete, when a directory is visited using
+a buffer within a particular workarea, or a valid directory is
+visited using a dired buffer. In both cases, a default task is
+required.
+
+Also, if any buffer is open in a modified state and the buffer
+is visiting a working file within the directory, it needs to
+be saved or reverted prior to performing the undo checkout.
+
+@strong{Caution:} this operation reverts all data in the files, this means
+that altered data in files being reverted is irreversibly removed.
+
+Undoes the checkout of the current directory and it's files from @ibmrs{} 
+back into ``integrate'' state.
+
+This operation will allways ask the user for confirmation, as data
+can be permanently lost.
+
+@section Check In
+@anchor {Directory Check In}
+@cindex checkin directory
+
+(Menu > @ibmrs{} > Directory > Check In)@*
+(M-x vc-rational-synergy-ci-directory) 
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea or when a directory is visited
+using a dired buffer. Also, a default task must be selected.
+
+If any of the buffers is visiting a file which is part of the directory,
+and the buffer is in modified state, the operation will be aborted, as
+these buffers first need their data to be saved or reverted.
+
+Before checking in, asks the user to enter a comment. If the customization
+variable @code{vc-rational-synergy-disallow-empty-comment}
+is set, a comment must be given, otherwise, the operation will be aborted.
+
+If all above prerequisites are met, the directory and files thereof are 
+checked in and the associated buffers are updated to reflect these changes.
+
+@section Register
+@anchor{Directory Register}
+@cindex register directory
+
+(Menu > @ibmrs{} > Directory > Register)@*
+(M-x vc-rational-synergy-register-directory)
+
+This item is only able to complete, when a file is visited using
+a buffer within a particular workarea or when a directory is visited
+using a dired buffer. Also, a default task must be selected.
+
+This operation is both able to recursively as well as non-recursively
+register a directory. Recursively means that it attempts to register
+all directories, their sub-directories and so on including their files.
+
+The operation will only register files which do not match the files set
+by the customization variable @code{vc-rational-synergy-skip-criteria}
+
+It will register the file into @ibmrs{} and, when the customization
+variable `vc-rational-synergy-query-create-file-version' is set,
+ask for a file version. If, using the minibuffer, no value is given, 
+normal operation is assumed and @ibmrs{} itself will set the proper attributes.
+
+A result of registered files and non-registered are shown in the @ibmrs{}
+buffer, such that is is visible to see which files and directories have been
+properly registered.
+
+
+
+@node Modeline, Show Properties, Directory operations, Functionality
+@chapter Modeline
+@cindex modeline
+
+(Menu > @ibmrs{} > Update Modeline)@*
+(M-x vc-rational-synergy-update-modeline RET)
+
+It is possible to update the modeline of a buffer. This is especially necessary
+if direct operations are performed using the CCM command from within a shell in
+Emacs.
+
+The modeline will be updated by appending a suffix to the buffer's name, if the
+buffer is visiting a file within a work area. It will show the status of the
+file and the version of the file.
+
+
+
+@node Show Properties, , Modeline, Functionality
+@chapter Show Properties
+@cindex properties
+
+(Menu > @ibmrs{} > Show Properties)@*
+(C-c RET p)
+
+If the buffer is visiting a file inside a work area, and the file is registered
+in @ibmrs{}, shows the properties of that file inside the @ibmrs{} buffer.
+
+
 
 @node  Customization, User Options, Functionality, Top
 @chapter Customization
 @cindex customize customization preferences options
 
-This chapter describes how to customize CM Synergy mode to suit your wishes and needs.
+This chapter describes how to customize @ibmrs{} mode to suit your wishes and needs.
 Emacs customization variables are used.
-These are divided in 2 groups of custom-variables govering the mode:
-@code{vc-cmsyn-user (User Options)} and @code{vc-cmsyn-admin (Admin Options)}.
-The 1st group deals with personal preferences, the 2nd with the way the mode works.
+These are divided in several groups of custom-variables govering the mode:
+@code{vc-rational-synergy (User Options)},
+@code{vc-rational-synergy-tooling (Tool Options)},
+@code{vc-rational-synergy-admin (Admin Options)} and
+@code{vc-rational-synergy-authentication (Authentication Options)} 
+
+The base group deals with personal preferences, the administrative options
+with how the mode works and the last group with authentication settings.
 
 @menu
-* User Options::         User Options
-* Admin Options::        Administration Options
-* Patch Admin Options::  Patch Administration Options
+* User Options::           User Options
+* Tool Options::           Tool Options
+* Admin Options::          Administration Options
+* Authentication Options:: Authentication Options
 @end menu
 
 The options should *not* be set with setq but by using the customisation system of emacs.
@@ -566,7 +690,7 @@ You may also want to take a look in the Options menu under Customize Emacs.
 Alternatively edit the custom-set-variables section of your personal init file by hand and set
 the options there.
 
-@node  User Options, Admin Options, Customization, Customization
+@node  User Options, Tool Options, , Customization
 @chapter User Options
 @c @cindex 
 
@@ -575,264 +699,171 @@ Every user may work with his / her own settings.
 
 The options are:@*
 @vtable @samp
-@c @itemize @bullet
-@item vc-cmsyn-buffer-frame-width
-@itemx CM Synergy output buffer frame width
-The default width of the CM Synergy output-buffer-frame.
 
-@item vc-cmsyn-buffer-frame-height
-@itemx CM Synergy output buffer frame height
-The default height of the CM Synergy output-buffer-frame.
+@item vc-rational-synergy-menu-path
+@strong{Sets a different menu path}
+Indicates the place of the @ibmrs{} menu in the menu-bar (no elements -so nil- is at top).
 
-@item vc-cmsyn-command-end-jump-to-output-buffer-p
-@itemx Jump to Output-buffer After Commands?
-The default height of the CM Synergy output-buffer-frame.
+@item vc-rational-synergy-use-message-boxes
+@strong{Whether to use message boxes}
+Indicates that operations which conclude with a message, show the message in a
+message box, instead of using the Echo Area (minibuffer) for conveying information.
 
-@item vc-cmsyn-register-checks-in-p
-@itemx Check a file in when registering? 
-If this is non-nil registering a file into CM Synergy will check it in at the same time.
+This option is especially practical for those who are not accustomed to how
+the Emacs @ibmrs{} interface works.
 
-@item vc-cmsyn-iconify-frame-when-ccm-gui
-@itemx Iconify emacs when selecting tasks? 
-If this is non-nil registering a file into CM Synergy will check it in at the same time.
+@item vc-rational-synergy-disallow-empty-comment
+@strong{Disallow comments which are empty}
 
-@item vc-cmsyn-menu-path
-@itemx Menu Path for CM Synergy menu 
-Indicates the place of the CM Synergy menu in the menu-bar (no elements -so nil- is at top).
+When activated, and as such set to a non-nil value, this option disallows users
+from attempting a check in opereration without giving a valid comment.
+
+@item vc-rational-synergy-skip-criteria
+@strong{Skip files from directory registration}
+
+When a directory is being registered, the extensions mentioned here will be
+used to match against files being registered during directory registration.
+
+If a file (or directory) matches a criterion, the file (or directory) will
+not be registered. A typical a criterion is an artifact from a compilation
+of a unit.
+
+The criteria are defined as wildcard criteria.
+
+@item vc-rational-synergy-version-object-separator
+@strong{Project Version Object Separator}
+
+The @ibmrs{} object-version separator.@*
+This is configured in @ibmrs{}, separates object-name and version in 4-part-names,
+typically, this is a tilde (~).
+
 @end vtable
 
-@node  Admin Options, Patch Admin Options, User Options, Customization
+
+@node Tool Options, Admin Options, User Options, Customization
+@chapter User Options
+@c @cindex 
+
+The user options are available from the Menubar and deal with purely personal preferences.
+Every user may work with his / her own settings.
+
+The options are:@*
+@vtable @samp
+
+@item vc-rational-synergy-binary-name
+@strong{@ibmrs{} binary (executable) name}
+
+The @ibmrs{} executable name, typically, this will be @emph{ccm}.
+
+@item vc-rational-synergy-startup-path
+@strong{@ibmrs{} startup path}
+
+If the binary can not be found in the system's PATH, it needs to
+be set explicitely where it can be found.
+
+@end vtable
+
+@node  Admin Options, Authentication Options, Tool Options, Customization
 @chapter Admin Options
 @c @cindex 
 
-The admin options are only available from the Menubar if configured so in an option (@ref{vc-cmsyn-customize-admin-button-p}).
 You can put up a customization-buffer by means of: @*
 M-x customize-group RET vc-cmsyn-admin RET.@*
 Here the options are listed and you can manage te values here.
-They deal with a correct working of CM Synergy mode and should be set by the system administrator.
-Whenever CM Synergy is configured differently or when output strings from CM Synergy change (new versions e.g.), 
+They deal with a correct working of @ibmrs{} mode and should be set by the system administrator.
+Whenever @ibmrs{} is configured differently or when output strings from @ibmrs{} change (new versions e.g.), 
 changes in these settings may be necessary.
 
 The options are:@*
 @vtable @samp
-@item vc-cmsyn-check-default-task-set-p
-@itemx Check for default task set? 
-Boolean indicating if it has to be checked if a default task is set before performing a ccm update.
 
-@item vc-cmsyn-query-create-file-type
-@itemx Query File-type? 
+@item vc-rational-synergy-query-create-file-type
+@strong{Query File-type?}
 Boolean indicating if type of file has to be queried before registering a file in ccm
-Typically this will be organized within CM Synergy already so it goes automatically.
+Typically this will be organized within @ibmrs{} already so it goes automatically.
 
-@item vc-cmsyn-query-create-file-version
-@itemx Query File-version? 
+@item vc-rational-synergy-query-create-file-version
+@strong{Query File-version?}
 Boolean indicating if version of file has to be queried before registering a file in ccm.
-Typically this will be organized within CM Synergy already so it goes automatically.
+Typically this will be organized within @ibmrs{} already so it goes automatically.
 
-@item vc-cmsyn-auto-check-status-file-open-p
-@itemx Auto check status on file open? 
-Indicates if CM Synergy status should be checked for on opening of files.
-This will have to be switched on, otherwise file-status is not retrieved from CM Synergy when files are opened.
+@item vc-rational-synergy-auto-check-status-file-open-p
+@strong{Auto check status on file open?}
+Indicates if @ibmrs{} status should be checked for on opening of files.
+This will have to be switched on, otherwise file-status is not retrieved from @ibmrs{} when files are opened.
 
-@item vc-cmsyn-buffer-name
-@itemx CM Synergy output buffer name 
-Name of buffer in which to log CM Synergy actions.
+@item vc-rational-synergy-buffer-name
+@strong{The @ibmrs{} buffer name}
+Name of buffer in which to log @ibmrs{} actions.
 
-@item vc-cmsyn-exe-name
-@itemx CM Synergy executable name 
-The CM Synergy executable name
+@item vc-rational-synergy-perl-path
+@strong{Location where Perl is situated}
+Name of the path where the Perl binary can be found. If not given, an attempt
+is made to use the system defined PATH environment.
 
-@item vc-cmsyn-version-object-separator
-@itemx Project Version Object Separator 
-The CM Synergy object-version separator.@*
-This is configured in CM Synergy, separates object-name and version in 4-part-names.
-
-@item vc-cmsyn-no-differences-found-string
-@itemx No differences found string 
-The string CM Synergy outputs for indicating that there are no differences when comparing releases.
-
-@item vc-cmsyn-parallel-versions-string
-@itemx String output by CM Synergy when a parallel version exists
-String in CM Synergy output when a parallel version exists.
-
-@item vc-cmsyn-already-checked-out-regexp
-@itemx String output by CM Synergy when a writable file is tried to checkout 
-Regexp for checking CM Synergy output to see if a file was checked out correctly.
-
-@item vc-cmsyn-checked-out-status-list
-@itemx String output by CM Synergy when a writable file is tried to checkout 
-Regexp for checking CM Synergy output to see if a file was checked out correctly.
-
-@item vc-cmsyn-enable-set-ccm-addr-p
-@itemx CCM_ADDR button? 
-@anchor{vc-cmsyn-enable-set-ccm-addr-p}Indicates if button for setting CCM_ADDR should should be enabled.
-
-@item vc-cmsyn-customize-admin-button-p
-@itemx Customize-admin-options button?
-@anchor{vc-cmsyn-customize-admin-button-p}Determines if button for customizing admin-options should be present in CM Synergy-menu, default not, only allowed for specific users.
+@item vc-rational-synergy-graph-easy
+@strong{Location where Graph-Easy is located}
+Name of the path where both the binary grapheasy (in bin/) can be found, and
+the support libraries for grapheasy. Other than the Perl binary, it is now
+compulsary to set this path.
 
 @end vtable
 
-@node  Patch Admin Options, Patches, Admin Options, Customization
-@chapter Patch Admin Options
+@node Authentication Options, , Admin Options, Customization
+@chapter Admin Options
 @c @cindex 
 
-The patch admin options are only available from the Menubar if configured so (@ref{vc-cmsyn-customize-admin-button-p}).
-You can put up a customization-buffer by means of: @*
-M-x customize-group RET vc-cmsyn-patch-admin RET.@*
-Here the options are listed and you can manage te values here.
-They deal with a correct working of CM Synergy (patch) mode and should be set by the system administrator.
-Whenever CM Synergy is configured differently or when output strings from CM Synergy change (new versions e.g.), 
-changes in these settings may be necessary.
-
-The options are:@*
 @vtable @samp
-@item vc-cmsyn-patch-functionality-p
-@itemx Patch-file-functionality-in-use? 
-@anchor{vc-cmsyn-patch-functionality-p}Is the patch-file-functionality in use (default available for magik)? This has to be configured!
 
-@item vc-cmsyn-patch-project
-@itemx Patch-project 
-@anchor{vc-cmsyn-patch-project}The patch-project for storing the patch-files: name~version.
+@item vc-rational-synergy-authentication-explicit
+@strong{Should explicitely authenticate}
 
-@item vc-cmsyn-patch-hotfix-extensions
-@itemx Patch-hotfix-extensions
-List with possible extensions for hot-fix-patch-files (default just @code{magik}, for Smallworld Magik.
+When a file is visited by a buffer inside a work area, or operation is
+started using @ibmrs{}, it automatically starts the authentication procedure.
 
-@item vc-cmsyn-patch-file-properties
-@itemx Patch-file-properties
-List with data needed for the generation of patch-files, keyed on @samp{patch-file-extension}.
-@enumerate
-@item
- File extension: extension for the patch-file (typically same af for the source-code-files), this identifies the right entry in this list.
-@item
- Patch-file identification regexp: regexp that when it matches in a CM Synergy file indicates that the file is a patch-file.
-@item
- Patch-mode write-hook: when supplied, this function is added to write-contents-hooks of a patch-file, the standard value is @code{vc-cmsyn-patch-mode-write-hook}, which will look for updating a Date Changed string with the current date.
-@end enumerate
+If it is wanted to perform this action by hand, and disallow automatic
+authentication, this value should be set to a non-nil value.
 
-@item vc-cmsyn-patch-types
-@itemx Patch Types 
-@anchor{vc-cmsyn-patch-types}List with data needed for the generation of patch-files, keyed on @samp{source-file-extension}.
-@enumerate
-@item
- File extension: extension for the patch-file (typically same af for the source-code-files), this identifies the right entry in this list.
-@item
- Expand-function needs to supply begin-and end position of complete source-code around point in the buffer where it's called (without arguments).
-@item
-@anchor{vc-cmsyn-patch-types|relative-path-patch-project} Relative path within project-work-area: the work-area is known via the project, the sub-directory-path should be defined with this entry (e.g. source).
-@item
- Source-file-mode function: function to call to switch the source-code files in the right major-mode (like `magik-mode').
-@item
- Patch-file-name function: function that generates the name for the patch-file, 1 parameter: task.
-@item
- Regexp to match blank / commented code: regexp that is used to check for changes that are pure blanks / comments which will not be taken to the patch-file.
-@item
- Format-string for file-section-start: this string is sent as 1st parameter to `format', the current-source-file being 2nd: inserted in patch-file
- as start-marker for patches from current source-file.
-@item
- Format-string for file-section-end: this string is sent as 1st parameter to `format', the current-source-file being 2nd: inserted in patch-file
- as end-marker for patches from current source-file.
-@item
- Regexp that matches the complete leaf-name of a patch-file of this type, used to identify files as being such a patch-file
-@item
- Init-Function to call within a file-to-diff, to prepare the file for diff (may cleanup emtpy lines, comments, multiple blanks, ...)
-@item
- Function to call after creating the patch-buffer, before code is being inserted
-@item
- Function to call in patch-buffer *after* all code is inserted
-@item
- Function to call in patch-buffer, before code for 1 specific file is inserted (after file-start-marker is inserted)
-@item
- Function to call in patch-buffer, after all code for 1 specific file is inserted (before file-end-marker is inserted).
-@item
- Patch file header generation function
-@item
-@anchor{vc-cmsyn-patch-types|load-function} Load function: (if any, @code{transmit-buffer-to-magik} in case of Smallworld)
-@item
- Jump to original source function (if any)
-@item
- Jump to patch-file function (if any)
-@end enumerate
+@item vc-rational-synergy-authentication-license-friendly
+@strong{Should be nice to licenses}
+
+Normally, after authentication, a address is taken automatically and
+only returned after logout, also returning the license. If licenses
+are scarce, it could be decided to perform actions such that it will
+authenticate and take a license for the period of the action itself.
+
+@strong{Caution:} this is extremely slow
+
+@item vc-rational-synergy-authentication-settings
+@strong{Database and host settings}
+
+It is necessary to have a database defined. The host can be derived
+from the database name if the normal port is used. The database and
+host can also be determined through @code{CCM_DATABASE} and 
+@code{CCM_HOST}. Setting these values will override those.
+@ref{CCM_DATABASE} and @ref{CCM_HOST}
+
+@item vc-rational-synergy-authentication-username
+@strong{Database and host settings}
+
+If a username is derived but is not the username wanted, it can
+be overriden using this customization variable. @ref{CCM_USERNAME}
 
 @end vtable
 
-@node   Patches, Restrictions/Limitations, Patch Admin Options, Top
-@chapter Patches
-@cindex patches
 
-Included in CM Synergy mode is a framework for generating patch-files: files with the changes compared with the base-line version.
-The framework is default configured for @code{Smallworld Magik} files.
+@node CLI, Concept Index, , Top
+@chapter CLI
+@cindex cli command-line
 
-What happens is that a list is made of the files belonging to the current task.@*
-Restrictions apply: @xref{patch-file-generation-restriction}.
-
-Of those files the base-line version is retrieved.@*
-From both versions a reformatted version is created first:@* 
-all comment-lines are removed and all multiple-blanks that do not occur in strings are reduced to 1 blank.@*
-Then both reformatted versions are diffed against each other.@*
-With the diff output complete-code-blocks are created from the recent version and those blocks are copied into a patch-file.@*
-There is 1 patch-file per task, each block for 1 file is marked with special comment-markers.@*
-For every occurring file-extension different patch-files can be created.@*
-E.g. for Smallworld Magik changes in both magik- and msg-files go into a <name>.magik file.
-
-The patch-files may use the same file-header as in the normal code files is used, it may also be 1 specific for a patch-file.@*
-This is configured for every occurring file-extension in the custom-variable @var{vc-cmsyn-patch-types} (@ref{vc-cmsyn-patch-types}).@*
-Within a patch-file you can jump to the original source with @samp{F6 s}.@*
-If the original file is in more than 1 project, the user will be prompted for the project.@*
-Within a CM Synsergy controlled source-file you can jump to an evt. patch-file with @samp{F6 p}.@*
-When the source is in more than 1 patch-file, all applicable files are opened.
-
-The patch-files are placed in a special patch-project, defined in CM Synergy.@*
-The place of this project is configured for Emacs in an option (@ref{vc-cmsyn-patch-project}).@*
-The relative path within the patch-project is configured within @var{vc-cmsyn-patch-types} (@ref{vc-cmsyn-patch-types|relative-path-patch-project}).
-
-A similar function as creating patch-files is present: Load Task Changes.@*
-This does principally the same, only the patch-file is created as a temporary file, which is not registered in CM Synergy.@*
-These temporary files are loaded with a function configured in @var{vc-cmsyn-patch-types} then (@ref{vc-cmsyn-patch-types|load-function}).
-
-For configuration: @xref{Patch Admin Options}.
-
-@c @cindex menu-bar menubar getting started installation install
-
-@c @menu
-@c * Installation::                Installation of ECB
-@c * First steps::                 First steps after activating ECB first time
-@c @end menu
-     
-@c @node First Chapter
-@c @chapter First Chapter
-     
-@c @cindex first chapter
-@c @cindex chapter, first
-
-@node Restrictions/Limitations, Concept Index, Patches, Top
-@chapter Restrictions/Limitations
-@table @samp
-@item vc integration
-Although the name of the package is vc-cmsyn it is not integrated with vc (yet).
-It merely indicates that this is the intention.
-In this package sentinel is used in the most calls to Synergy, where vc doesn't offer
-clear hooks for this. It can be integrated nevertheless but with more effort so it just hasn't 
-been done yet.
+Currently, there is no direct command line interface implemented
+to target the CCM command line program, however, if there is a session
+available, each then-spawned subprogram will have access to the
+CCM_ADDR environment variable, causing it to be possible to connect
+with the available CCM binary on the platform.
 
 
-@item Open task-files 
-@anchor{open-task-files-restriction}Since it is possible that more than 1 version of a file belongs to 1 task, the files are filtered on being a leaf in history.
-This means this currently only works with private workareas.@*
-@ref{Open Task Files}
-
-@item Patch-file generation 
-@anchor{patch-file-generation-restriction}Since it is possible that more than 1 version of a file belongs to 1 task, the files are filtered on being a leaf in history.@*
-This is only reliable when users work in private workareas!@*
-Working with shared workareas it is possible that the same file has (a) newer version(s) for other tasks.@*
-In this case it is not a leaf anymore for the current task.@*
-The file would not be selected for generating a patch-file anymore!@*
-@ref{Patches}
-
-@end table
-
-@node Concept Index, Variable Index, Restrictions/Limitations, Top
+@node Concept Index, Variable Index, CLI, Top
 @appendix Concept Index
 @printindex cp
 
