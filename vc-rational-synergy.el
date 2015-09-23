@@ -1,4 +1,4 @@
-;;; vc-rational-synergy.el --- Installation of cmsyn, CM Synergy mode
+;;; vc-rational-synergy.el --- Installation of vc-rational-synergy, IBM Rational Synergy mode
  
 ;; Copyright (C) 2015 Realworld OO Systems B.V., the Netherlands
 ;; Copyright (C) 2003 Realworld Systems
@@ -19,17 +19,16 @@
 ;; Boston, MA 02111-1307, USA.
  
 
-;; Author: 
-;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
-;;     Geert Ribbers
-;;     
-;; Maintainer:
-;;     Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
-;;
-;; Homepage: http://github.com/RealworldSystems/emacs-rational-synergy
-;;
+;; Author: Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+;; Maintainer: Sjoerd van Leent <sjoerd.van.leent@realworld-systems.com>
+;; URL: http://github.com/RealworldSystems/emacs-rational-synergy
+;; Created: 23rd September 2015
+;; Version: 1.0.1
 ;; Keywords: ibm rational synergy telelogic vc version-control
 
+;; Additional authors:
+;;     Geert Ribbers
+;;     Henrik Joensson
 
 ;;; Commentary:
  
