@@ -72,7 +72,6 @@ the actual content returned by the command"
 			    (vc-rational-synergy-binary-name) ;; name of binary
 			    command-line)))
 	  
-	  (message (prin1-to-string lines))
 	  lines))
     (error 
      (error "Could not execute CCM command, cause: [%s]"
@@ -127,7 +126,6 @@ with the actual content returned by the command"
       (if result
 	  (setq result (concat result (make-string 1 ?\n) elt))
 	(setq result elt)))
-    (message result)
     result))
  
 

@@ -164,10 +164,11 @@ If COMMENT is set, checking the file with given comment"
 
     ;; Check if the buffer is really in working status, if not,
     ;; exit and inform the user if interactive.
-    (unless (vc-rational-synergy-buffer-working)
+    (unless (or (vc-rational-synergy-buffer-working)
+		(vc-rational-synergy-buffer-visible))
       (progn
 	(when (called-interactively-p 'all)
-	  (vc-rational-synergy-message "%s" "Buffer not in working mode"))
+	  (vc-rational-synergy-message "%s" "Buffer not in working/visible mode"))
 	(throw 'exit nil)))
 
     (setq comment (vc-rational-synergy--check-comment comment))
@@ -198,9 +199,10 @@ If COMMENT is set, checking the file with given comment"
   (condition-case err
       (progn
 	(with-vc-rational-synergy
-	 (unless (vc-rational-synergy-buffer-directory-working)
+	 (unless (or (vc-rational-synergy-buffer-directory-working)
+		     (vc-rational-synergy-buffer-directory-visible))
 	   (error
-	    "The directory pointed to by this buffer is not in working state"))
+	    "The directory pointed to by this buffer is not in working/visible state"))
 	 
 	 ;; Check if there are any buffers associated to the default
 	 ;; task which might have been modified.

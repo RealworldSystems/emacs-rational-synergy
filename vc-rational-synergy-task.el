@@ -37,6 +37,8 @@
 (require 'vc-rational-synergy-tabular)
 (require 'vc-rational-synergy-utilities)
 
+(require 'xml) ;; Used for parsing preferences
+
 ;;;; CCM interface.
 
 ;;;###autoload
@@ -47,7 +49,7 @@ This is a wrapper around `vc-rational-synergy-command-to-string'"
    `("query" 
      ,(format "status='task_assigned' and resolver='%s'" user)
      "-u")
-   'task-number 'task-description 'task-synopsis))
+   'task-number 'task-synopsis 'task-description))
 
 
 ;;;###autoload
@@ -62,9 +64,42 @@ to be able to get a default task directly from the command"
 	     (task-id (string-to-number raw-task))
 	     (result (vc-rational-synergy-command-w/format-to-list
 		      `("task" "-show" "i" ,(format "%s" task-id))
-		      'task-number 'task-description 'task-synopsis)))
-	(when result (car result)))
+		      'task-number 'task-synopsis 'task-description))))
       (error nil)))
+
+;;;###autoload
+(defun vc-rational-synergy--command-default-task-from-preferences ()
+  "Acquires the default task using the user preferences, and sets the
+default task `in-situ'"
+  (let* ((user (vc-rational-synergy-logged-on-user))
+	 ;;(tasks (vc-rational-synergy-get-tasks-for-user user))
+	 (the-prefs (vc-rational-synergy-command-to-string
+		       `("query" ,(concat "type='admin' and owner='"
+					  user
+					  "' and has_attr('preferences')")
+			 "-u" "-nch" "-no_sort" "-f" "%preferences"))))
+    (when the-prefs
+      (when (stringp the-prefs)
+	(let* ((xml-doc (car (with-temp-buffer
+			      (insert (concat the-prefs "\n"))
+			      (goto-char 0)
+			      (buffer-size) 
+			      (xml-parse-region 1 (buffer-size)))))
+	       (groups (xml-get-children xml-doc 'Group))
+	       (base-group (let (x)
+			     (dolist (a groups x)
+			       (when (equal "" (xml-get-attribute-or-nil a 'name))
+				 (setq x (xml-get-children a 'Item))))))
+	       (cvid (let (x)
+		       (dolist (a base-group x)
+			 (when (equal "db.user.current.task" (xml-get-attribute-or-nil a 'key))
+			   (setq x (car (cddr (car (xml-get-children a 'string))))))))))
+	  
+	  (message "Found CVID %s" cvid)
+	  (let ((task-id (vc-rational-synergy-command-to-string
+			  `("prop" ,(concat "@=" cvid) "-f" "%task_number"))))
+	    (vc-rational-synergy-command-to-string `("task" "-default" ,task-id))
+	    (vc-rational-synergy-command-default-task)))))))
 	
 	
 (defun vc-rational-synergy--command-task-files-using-id (task-id)
@@ -128,11 +163,17 @@ INSTANCE identification."
 (defun vc-rational-synergy-get-default-task ()
   "Acquires tasks, represented by `vc-rational-synergy-task'"
   (let ((raw-task (vc-rational-synergy-command-default-task)))
+    (unless raw-task
+      ;; If no result is found attempting acquiring the default
+      ;; task this way, there is another way of retrieving the
+      ;; default task, by accessing the preferences.
+      (setq raw-task (vc-rational-synergy--command-default-task-from-preferences)))
     (when raw-task
       (make-instance 'vc-rational-synergy-task
 		     :id (nth 0 raw-task)
 		     :name (nth 1 raw-task)
 		     :project (nth 2 raw-task)))))
+
 
 (defun vc-rational-synergy--select-task-for-project (user project)
   "This is the actual implementation function of 

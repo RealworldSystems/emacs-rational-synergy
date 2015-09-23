@@ -138,6 +138,16 @@ current buffer."
   (string= "integrate"
 	   (vc-rational-synergy-buffer-file-status buffer-or-name)))
 
+(defun vc-rational-synergy-buffer-visible (&optional buffer-or-name)
+  "Checks if the buffer has a visible file status"
+  (string= "visible"
+	   (vc-rational-synergy-buffer-file-status buffer-or-name)))
+
+(defun vc-rational-synergy-buffer-released (&optional buffer-or-name)
+  "Checks if the buffer has an released file status"
+  (string= "released"
+	   (vc-rational-synergy-buffer-file-status buffer-or-name)))
+
 (defun vc-rational-synergy-buffer-directory-working (&optional buffer-or-name)
   "Checks if the buffer has a working file status"
   (string= "working"
@@ -146,6 +156,16 @@ current buffer."
 (defun vc-rational-synergy-buffer-directory-integrate (&optional buffer-or-name)
   "Checks if the buffer has an integrate file status"
   (string= "integrate"
+	   (vc-rational-synergy-buffer-directory-status buffer-or-name)))
+
+(defun vc-rational-synergy-buffer-directory-visible (&optional buffer-or-name)
+  "Checks if the buffer has a visible file status"
+  (string= "visible"
+	   (vc-rational-synergy-buffer-directory-status buffer-or-name)))
+
+(defun vc-rational-synergy-buffer-directory-released (&optional buffer-or-name)
+  "Checks if the buffer has an released file status"
+  (string= "released"
 	   (vc-rational-synergy-buffer-directory-status buffer-or-name)))
 
 

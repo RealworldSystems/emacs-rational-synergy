@@ -480,12 +480,15 @@ Uses `vc-rational-synergy-setup-history-for-buffer' in combination with
 
 (defun vc-rational-synergy-history ()
   "Draws a diagram using the knowledge of the history
-Requires Bash, Perl and Graph-Easy"
+Requires Perl and Graph-Easy"
   (interactive)
   (let* ((orig-buffer (current-buffer))
 	 (buffer (vc-rational-synergy-buffer))
 	 (sorted-links (vc-rational-synergy--sorted-links-buffer))
-	 (perl (concat (vc-rational-synergy-unixify-path vc-rational-synergy-perl-path) "/perl"))
+	 (perl (if (and (stringp vc-rational-synergy-perl-path)
+			(> (length vc-rational-synergy-perl-path) 0))
+		   (concat (vc-rational-synergy-unixify-path vc-rational-synergy-perl-path) "/perl")
+		 "perl"))
 	 (script (concat 
 		  (vc-rational-synergy-unixify-path vc-rational-synergy-graph-easy) 
 		  "/bin/graph-easy"))

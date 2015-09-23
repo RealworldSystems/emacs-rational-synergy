@@ -209,7 +209,7 @@ these would be compiled emacs lisp (elc) files."
   (interactive)
   (condition-case err
       (with-vc-rational-synergy
-       (let* ((version	     (vc-rational-synergy--acquire-version))a
+       (let* ((version	         (vc-rational-synergy--acquire-version))
 	      (directory-name    (vc-rational-synergy--buffer-directory))
 	      (recursive	     (when directory-name
 				       (y-or-n-p (format "Register %s recursively? "

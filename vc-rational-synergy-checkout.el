@@ -63,33 +63,34 @@ This is a wrapper around `vc-rational-synergy-command-to-string'"
   "Check out a file from CM Synergy."
   (interactive)
   (with-vc-rational-synergy
+   (when (vc-rational-synergy--check-buffer-assoc)
+     (catch 'exit
+       ;; First check if this buffer is at all part of synergy, and
+       ;; is in integration mode
 
-   (catch 'exit
-     ;; First check if this buffer is at all part of synergy, and
-     ;; is in integration mode
-
-     (condition-case err
-	 (unless (vc-rational-synergy-buffer-integrate)
-	   (vc-rational-synergy-message
-	    "The file pointed to by this buffer is not in integrate state")
-	   (throw 'exit nil)
-       (error err
-	      (vc-rational-synergy-message (error-message-string err))
-	      (throw 'exit nil))))
+       (condition-case err
+	   (unless (or (vc-rational-synergy-buffer-integrate)
+		       (vc-rational-synergy-buffer-released))
+	     (vc-rational-synergy-message
+	      "The file pointed to by this buffer is not in integrate/released state")
+	     (throw 'exit nil)
+	     (error err
+		    (vc-rational-synergy-message (error-message-string err))
+		    (throw 'exit nil))))
        
-     
-     ;; If buffer is modified, halt
-     (when (buffer-modified-p) 
-       (vc-rational-synergy-message 
-	"This buffer is modified, please revert or save first")
-       (throw 'exit nil))
-     
-     ;; Buffer is not modified, continue
-     (if (vc-rational-synergy--command-co (buffer-file-name))
-	 (progn
-	   (revert-buffer nil t)
-	   (vc-rational-synergy-message "Checkout complete: %s" (buffer-name)))
-       (vc-rational-synergy-message "Failed checking out: %s" (buffer-name))))))
+       
+       ;; If buffer is modified, halt
+       (when (buffer-modified-p) 
+	 (vc-rational-synergy-message 
+	  "This buffer is modified, please revert or save first")
+	 (throw 'exit nil))
+       
+       ;; Buffer is not modified, continue
+       (if (vc-rational-synergy--command-co (buffer-file-name))
+	   (progn
+	     (revert-buffer nil t)
+	     (vc-rational-synergy-message "Checkout complete: %s" (buffer-name)))
+	 (vc-rational-synergy-message "Failed checking out: %s" (buffer-name)))))))
 
 
 ;;;###autoload
@@ -98,41 +99,42 @@ This is a wrapper around `vc-rational-synergy-command-to-string'"
   (interactive)
 
   (with-vc-rational-synergy
+   (when (vc-rational-synergy--check-buffer-assoc)
+     (catch 'exit
+       ;; First check if this buffer is at all part of synergy, and
+       ;; is in integration mode
 
-   (catch 'exit
-     ;; First check if this buffer is at all part of synergy, and
-     ;; is in integration mode
+       (condition-case err
+	   (unless (or (vc-rational-synergy-buffer-directory-integrate)
+		       (vc-rational-synergy-buffer-directory-released)
+	     (vc-rational-synergy-message
+	      "The directory pointed to by this buffer is not in integrate/released state")
+	     (throw 'exit nil)
+	     (error err
+		    (vc-rational-synergy-message (error-message-string err))
+		    (throw 'exit nil))))
 
-     (condition-case err
-	 (unless (vc-rational-synergy-buffer-directory-integrate)
-	   (vc-rational-synergy-message
-	    "The directory pointed to by this buffer is not in integrate state")
-	   (throw 'exit nil)
-       (error err
-	      (vc-rational-synergy-message (error-message-string err))
-	      (throw 'exit nil))))
+       ;; First check if this buffer is modified, if such, bail out
+       (when (buffer-modified-p) 
+	 (vc-rational-synergy-message
+	  "This buffer is modified, please revert or save first.")
+	 (throw 'exit nil))
 
-     ;; First check if this buffer is modified, if such, bail out
-     (when (buffer-modified-p) 
-       (vc-rational-synergy-message
-	"This buffer is modified, please revert or save first.")
-       (throw 'exit nil))
-
-     
-     ;; Check if there are any buffers associated to the current work area,
-     ;; and see if they are modified. Bail out if this is the case
-     (when (vc-rational-synergy--buffers-modified-p)
-       (vc-rational-synergy-message
-	"There are buffers in modified state, please revert or save first.")
-       (throw 'exit nil))
-     
-     ;; Now all things are go
-     (let ((directory-name (vc-rational-synergy--buffer-directory)))
-     (if (vc-rational-synergy--command-co directory-name)
-	 (progn
-	   (vc-rational-synergy--revert-buffers)
-	   (vc-rational-synergy-message "Checkout complete: %s" directory-name))
-       (vc-rational-synergy-message "Failed checking out: %s" directory-name))))))
+       
+       ;; Check if there are any buffers associated to the current work area,
+       ;; and see if they are modified. Bail out if this is the case
+       (when (vc-rational-synergy--buffers-modified-p)
+	 (vc-rational-synergy-message
+	  "There are buffers in modified state, please revert or save first.")
+	 (throw 'exit nil))
+       
+       ;; Now all things are go
+       (let ((directory-name (vc-rational-synergy--buffer-directory)))
+	 (if (vc-rational-synergy--command-co directory-name)
+	     (progn
+	       (vc-rational-synergy--revert-buffers)
+	       (vc-rational-synergy-message "Checkout complete: %s" directory-name))
+	   (vc-rational-synergy-message "Failed checking out: %s" directory-name))))))))
 
 
 
@@ -146,9 +148,10 @@ This is a wrapper around `vc-rational-synergy-command-to-string'"
      ;; is in integration mode
 
      (condition-case err
-	 (unless (vc-rational-synergy-buffer-working)
+	 (unless (or (vc-rational-synergy-buffer-working)
+		     (vc-rational-synergy-buffer-visible))
 	   (vc-rational-synergy-message
-	    "The file pointed to by this buffer is not in working state")
+	    "The file pointed to by this buffer is not in working/visible state")
 	   (throw 'exit nil)
        (error err
 	      (vc-rational-synergy-message (error-message-string err))
@@ -191,9 +194,10 @@ If any checkin has failed, return those failures as list"
      ;; is in integration mode
 
      (condition-case err
-	 (unless (vc-rational-synergy-buffer-directory-working)
+	 (unless (or (vc-rational-synergy-buffer-directory-working)
+		     (vc-rational-synergy-buffer-directory-visible))
 	   (vc-rational-synergy-message
-	    "The directory pointed to by this buffer is not in working state")
+	    "The directory pointed to by this buffer is not in working/visible state")
 	   (throw 'exit nil)
        (error err
 	      (vc-rational-synergy-message (error-message-string err))
